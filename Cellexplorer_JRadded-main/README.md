@@ -1,3 +1,5 @@
+This is the CellExplorer version we use, which includes JRCLUST compatibility. CellExplorer was originally developed by Peter Petersen et al. 
+
 # CellExplorer
 CellExplorer is a graphical user interface (GUI) and standardized pipeline for exploring and characterizing single cells acquired with extracellular electrodes. Visit [CellExplorer.org](https://cellexplorer.org/) to learn more about features, installation instructions, tutorials and general documentation.
 
