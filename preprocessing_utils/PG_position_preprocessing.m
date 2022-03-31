@@ -123,7 +123,7 @@ h = drawpolyline(gca,'Color','green');
 movingPoints=h.Position;
 
 fixedPoints=[0,0;minitor_W,0;minitor_W,monitor_H;0,monitor_H];
-fixedPoints(:,1)=fixedPoints(:,1)+100; %moving the image in x by 50cm
+fixedPoints(:,1)=fixedPoints(:,1)+100; %moving the image in x by 100mm
 fixedPoints(:,2)=fixedPoints(:,2)+50; %moving the image in x by 50cm
 
 disp('3.) transformation matrix is DONE!')
