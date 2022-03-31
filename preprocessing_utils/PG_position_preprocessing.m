@@ -26,7 +26,7 @@ position.Rostral_XY=[Position_Table.RostralX  Position_Table.RostralY Position_T
 position.Caudal_XY=[Position_Table.CaudalX  Position_Table.CaudalY Position_Table.Caudal_likelihood];
 
 % Clear temporary variables
-clear opts file path;
+clear opts path;
 
 %% Info about video file (number of frames)
 
@@ -48,7 +48,7 @@ fclose(fid);
 TTL_frame_video = (v-32768) * 0.0003125; % convert to volts
 
 %% sample-frame = alignment
-% onset and oofset of the TTL
+% onset and offset of the TTL
 sdnum=0;
 meanchannel=mean(TTL_frame_video); 
 sdchannel=std(double(TTL_frame_video ));
