@@ -11,13 +11,13 @@ function chanCoords = generateChanCoords(session)
 % verticalSpacing: the vertical spacing between channels (on the same configuration line; in µm)
 % shankSpacing (in µm)
 
-electrodeLayouts = {'linear','poly2','poly3','poly4','poly5','twohundred','staggered','neurogrid','read_from_prm'};
+electrodeLayouts = {'linear','poly2','poly3','poly4','poly5','twohundred','staggered','neurogrid','read_from_prm', '256chbundlev3'};
 
 % Default parameters
 source = 'defaults';
-layout = 'poly2';
-shankSpacing = 200; % in µm
-verticalSpacing = 20; % in µm
+layout = '256chbundlev3';
+shankSpacing = 1000; % in µm
+verticalSpacing = 60; % in µm
 
 ngroups = session.extracellular.nElectrodeGroups;
 groups = session.extracellular.electrodeGroups.channels;
@@ -61,8 +61,31 @@ switch(layout)
             end
             x = x+(a-1)*shankSpacing;
             xcoords = cat(1,xcoords,x(:));
-            ycoords = cat(1,ycoords,y(:))*verticalSpacing;
+            if isfield(session.animal,'probeImplants')
+                verticalSpacing = session.animal.probeImplants{a}.verticalSpacing;
+                if ~isnumeric(verticalSpacing)
+                    verticalSpacing = str2num(verticalSpacing);
+                end
+            end
+            ycoords = cat(1,ycoords,y(:)*verticalSpacing);
         end
+    case {'256chbundlev3'}
+        for a=1:4
+            if a == 1 || a == 4
+                verticalSpacing = 60;
+            else
+                verticalSpacing = 40;
+            end
+            
+            x = ones(64,1);
+            x = (x * (a-1) * shankSpacing);
+            y = (verticalSpacing*(0:63))';
+            y = flip(y);
+            
+            xcoords = cat(1,xcoords,x(:));
+            ycoords = cat(1,ycoords,y(:));
+        end
+        
     case 'staggered'
         horz_offset = flip([0,8.5,17:4:520]);
         horz_offset(1:2:end) = -horz_offset(1:2:end);
