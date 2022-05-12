@@ -1,0 +1,284 @@
+function fig = LFPViewer(data,samplerate,ripple_timestamps,ripple_classes,outputFileName)
+%LFPViewer view local field potential recordings and annotated events
+% lfp recordings stored as a timepoints x channels matrix
+% samplerate of the the recordings in Hz
+% ripple_timestamps (:,2) start and endpoints of ripples in seconds
+% ripple_classes (:,1) numerical vector containing the class number of each
+% event. Unclassified Ripples are assigned to class 0.
+% outputFileName filename under which to save the annotated ripple
+% timestamps
+
+
+
+%Parent container
+fig = uifigure;
+fig.Name = 'LFP Viewer';
+
+%App Data
+appdata.displayInterval = [1 samplerate]; % start by displaying the first second
+appdata.samplerate = samplerate; % Samplerate of the LFP signal
+appdata.data = data;
+appdata.framecount = size(data,1);
+appdata.n_channels = size(data,2);
+appdata.trace_spacing = 150;
+appdata.ripple_timestamps = ripple_timestamps; % ripple timestamps
+assert(size(ripple_timestamps,1)==size(ripple_classes,1),'ripple_timestamps and ripple_classes do not agree in dimension');
+appdata.ripple_classes = ripple_classes; % class id of ripples
+appdata.outputFileName = outputFileName; % filename to save ripple result
+
+%state flags and data fields for appending new ripples to the list
+appdata.isSelectingStart = false;
+appdata.selectedStartTimestamp = 0;
+appdata.isSelectingEnd = false;
+appdata.selectedEndTimestamp = 0;
+
+% generate colormap for patches
+appdata.colormap = hsv(10); % (num_classes,3) list of rgb tripples
+order = [2 6 10 4 8 3 7 1 5 9];
+appdata.colormap = appdata.colormap(order,:); % shuffle colors for better distinction of colors between contigous classes
+
+%help message
+appdata.helpMessage = 'left/right arrow : prev/next frame, up/down arrow : prev/next ripple , j : jump,  a : add, d: delete, 0...9 : assign class';
+
+%state flags and data fields for deleting existing ripples
+appdata.isDeleting = false;
+appdata.deletionTimestamp = 0;
+
+guidata(fig,appdata);
+
+%layout
+gl = uigridlayout(fig,[2 1]);
+gl.RowHeight = {'fit','1x'};
+gl.ColumnWidth = {'1x'};
+
+%Create components
+fig_label = uilabel(gl);
+fig_axes = uiaxes(gl);
+
+%Position Components
+fig_label.Layout.Row = 1;
+fig_label.Layout.Column = 1;
+fig_axes.Layout.Row = 2;
+fig_axes.Layout.Column = 1;
+
+% Configure Components
+fig_label.Text = appdata.helpMessage;
+drawLFP(fig,fig_axes); % trigger inital plot
+
+%App Behaviour
+fig.KeyPressFcn = {@ProcessKeyPress, fig_axes, fig_label};
+fig.WindowButtonDownFcn = {@(src,event)uiresume(src)}; % call uiresume on click
+
+end
+
+function drawLFP(src, uiaxes)
+% DRAWLFP trigger update of the lfp plot
+% src the parent uifigure
+% uiaxes the uiaxes to draw upon
+
+% unpack app data extract data in display intervall and generate timestamps
+appdata = guidata(src);
+data_slice_start = appdata.displayInterval(1);
+data_slice_stop = appdata.displayInterval(2);
+data_slice = appdata.data(data_slice_start:data_slice_stop,:);
+timestamps = (data_slice_start:data_slice_stop)/appdata.samplerate;
+ripple_timestamps = appdata.ripple_timestamps;
+
+% verticaly space data by adding offset values
+trace_offset = (1:appdata.n_channels) * appdata.trace_spacing;
+onevector = ones(numel(timestamps),1);
+offset =  (trace_offset(:) * onevector(:)' )'; % calculate outer product of vectors
+
+% show the lfp traces in a stacked plot
+plot(uiaxes,timestamps,double(data_slice)+offset,'Color',[0.5 0.5 0.5]);
+xlabel(uiaxes,'time [s]');
+xlim(uiaxes,[timestamps(1) timestamps(end)]);
+ylabel(uiaxes,'');
+
+% query y extent of plot
+yc = uiaxes.YLim;
+
+
+
+% visualize ripple intervals by rectangular annotations
+for i = 1:size(ripple_timestamps,1)
+    % get intervall and check visibility
+    interval_timestamps = ripple_timestamps(i,:);
+    interval_frames = interval_timestamps * appdata.samplerate;
+
+    % test if either the interval start or end point is located inside the
+    % time interval displayed in the plot
+    if (interval_frames(1)>=data_slice_start && interval_frames(1)<= data_slice_stop) ...
+            || (interval_frames(2)>=data_slice_start && interval_frames(2) <= data_slice_stop)
+
+        % assemple patch rectangle coordinates
+        xc = interval_timestamps;
+        px = [ xc(1) xc(2) xc(2) xc(1)];
+        py = [ yc(1) yc(1) yc(2) yc(2)];
+
+        % extract class id and map to color
+        class = appdata.ripple_classes(i);
+        color = appdata.colormap(class+1,:);
+
+        patch(uiaxes,px,py,color,'FaceAlpha',0.3,'EdgeColor','none');
+        text(uiaxes,xc(1),yc(1)+200,int2str(class)); % display class label in top left corner
+
+    end
+
+
+end
+
+end
+
+function ProcessKeyPress(src,event,uiaxes,fig_label)
+% extract data from parent figure
+appdata = guidata(src);
+display_start = appdata.displayInterval(1);
+display_end = appdata.displayInterval(2);
+intervall_length = display_end - display_start;
+switch event.Key
+    case 'leftarrow' % shift frame back in time
+        if display_start - intervall_length >= 0
+            % shift by display intervall if possible
+            display_start = display_start - intervall_length;
+            display_end = display_end - intervall_length;
+        else
+            % otherwise just reset to start
+            display_start = 1;
+            display_end = intervall_length;
+        end
+    case 'uparrow'
+        % calculate current center frame and timestamp
+        centerFrame = (display_start+display_end)/2;
+        centerTimestamp = centerFrame / appdata.samplerate;
+        % find first ripple onset after center timestamp
+        first_ripple = find(appdata.ripple_timestamps(:,1)>centerTimestamp+0.001,1);  % allow up to 1 ms rounding error
+        if ~isempty(first_ripple)
+            % if it exists make it the new center
+            future = appdata.ripple_timestamps(first_ripple,1) * appdata.samplerate; % get frame number of next ripple
+            display_start = max([round(future - intervall_length/2), 1]); % restrict intervall to beginning if necessary
+            display_end = min([display_start + intervall_length, appdata.framecount]); % restrict intervall to eof if we would extend past it
+        end
+    case 'downarrow'
+        % calculate current center frame and timestamp
+        centerFrame = (display_start+display_end)/2;
+        centerTimestamp = centerFrame / appdata.samplerate;
+        % find last ripple onset before center timestamp
+        last_ripple = find(appdata.ripple_timestamps(:,1)<centerTimestamp-0.001,1,'last'); % allow up to 1 ms rounding error
+        if ~isempty(last_ripple)
+            % if it exists make it the new center
+            past = appdata.ripple_timestamps(last_ripple,1) * appdata.samplerate; % get frame number of next ripple
+            display_start = max([round(past - intervall_length/2),1]); % restrict intervall to beginning if necessary
+            display_end = min([display_start + intervall_length, appdata.framecount]); % restrict intervall to eof if we would extend past it
+        end
+    case 'rightarrow'
+        if display_end + intervall_length <= appdata.framecount
+            display_start = display_start + intervall_length;
+            display_end = display_end + intervall_length;
+        else
+            display_start = appdata.framecount - intervall_length;
+            display_end = appdata.framecount;
+        end
+    case 'a' % add ripple interval
+        % check that we are currently not selecting an end point
+        if ~appdata.isSelectingEnd
+            fig_label.Text = 'Click to select event start point';
+            % set state flag for selecting start point and change mouse pointer
+            appdata.isSelectingStart = true;
+            src.Pointer = 'left';
+            uiwait(src); % wait for click or key press
+            appdata.selectedStartTimestamp = uiaxes.CurrentPoint(1,1);
+            % update app state and label text
+            src.Pointer = 'arrow';
+            fig_label.Text = appdata.helpMessage;
+            appdata.isSelectingStart = false;
+            appdata.isSelectingEnd = true;
+        else
+            fig_label.Text = 'Click to select event end point';
+            src.Pointer = 'left';
+            uiwait(src); % wait for click and get timestamp
+            appdata.selectedEndTimestamp = uiaxes.CurrentPoint(1,1);
+            % reset app state and pointer appearance
+            appdata.isSelectingEnd = false;
+            src.Pointer = 'arrow';
+            fig_label.Text = appdata.helpMessage;
+            % append new ripple to all property lists of ripples
+            new_interval = sort([appdata.selectedStartTimestamp appdata.selectedEndTimestamp]);
+            appdata.ripple_timestamps = [appdata.ripple_timestamps; new_interval];
+            appdata.ripple_classes = [appdata.ripple_classes; 0]; % create unlabeled ripples by default
+        end
+    case 'd' % delete ripple interval
+        % get user input
+        fig_label.Text = 'Click to delete interval containing point';
+        src.Pointer = 'left';
+        uiwait(src); % wait for click and get timestamp
+        deletion_point = uiaxes.CurrentPoint(1,1);
+        % reset app state and pointer appearance
+        appdata.isSelectingEnd = false;
+        src.Pointer = 'arrow';
+        fig_label.Text = appdata.helpMessage;
+        % find overlaping ripples and gather indices for deletion
+        to_delete = [];
+        for i = 1:size(appdata.ripple_timestamps,1)
+            interval = appdata.ripple_timestamps(i,:);
+            if deletion_point>=interval(1) && deletion_point<=interval(2)
+                to_delete = [to_delete i]; % mark row for deletion
+            end
+        end
+        % delete ripples from all property lists of ripples
+        appdata.ripple_timestamps(to_delete,:) = []; % delete outside of for loop to prevent index errors
+        appdata.ripple_classes(to_delete) = [];
+    case 's' % save ripples
+        ripple_timestamps = appdata.ripple_timestamps;
+        ripple_classes = appdata.ripple_classes;
+        save(appdata.outputFileName,"ripple_timestamps","ripple_classes");
+        message = {'Saving Succesfull!',strcat('Saved ripple timestamps to ',appdata.outputFileName,'.mat')};
+        uialert(src,message,'Saving Successfull','Icon','success');
+    case {'0','1','2','3','4','5','6','7','8','9'}
+        classID = round(str2double(event.Key));
+        % get user input
+        fig_label.Text = strcat('Click to label intervall with class ID ',event.Key);
+        src.Pointer = 'left';
+        uiwait(src); % wait for click and get timestamp
+        selection_point = uiaxes.CurrentPoint(1,1);
+        src.Pointer = 'arrow';
+        fig_label.Text = appdata.helpMessage;
+        % find overlaping ripples and gather indices for deletion
+        to_label = [];
+        for i = 1:size(appdata.ripple_timestamps,1)
+            interval = appdata.ripple_timestamps(i,:);
+            if selection_point>=interval(1) && selection_point<=interval(2)
+                to_label = [to_label i]; % mark row for deletion
+            end
+        end
+        % assign class ID to ripples
+        appdata.ripple_classes(to_label) = classID;
+
+    case 'j'
+        % jump to target timestamp
+        % open modal dialog to get user input
+        prompt = 'Enter timepoint to jump to [s]';
+        dialog_title = 'Jump Dialog';
+        dims = [1 35];
+        answer = inputdlg(prompt,dialog_title,dims);
+        answer = str2double(answer);
+
+        if answer >= 0 && answer <= (appdata.framecount / appdata.samplerate)
+            % got valid timepoint
+            targetTimepoint = answer;
+            % make it the new center
+            targetFrame = targetTimepoint * appdata.samplerate;
+            display_start = max([round(targetFrame - intervall_length/2), 1]); % restrict intervall to beginning if necessary
+            display_end = min([display_start + intervall_length, appdata.framecount]); % restrict intervall to eof if we would extend past it
+        end
+
+end
+
+% update application data and write back to parent
+appdata.displayInterval = [display_start display_end];
+guidata(src,appdata);
+
+% update the plot
+drawLFP(src,uiaxes);
+
+end
