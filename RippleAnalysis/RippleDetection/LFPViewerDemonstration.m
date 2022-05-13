@@ -1,5 +1,8 @@
 % Demonstration workflow manual ripple annotation
 
+%% add Buzcode Repo to search path
+addpath(genpath('C:\Users\Linus\Documents\Buzcode'))
+lfp_timestamps = (1:size(lfp_filtered,1))/2000;
 %% import downsampled lfp traces of ripple active region
 dHPC_ripple_channels = [120,85,84,86,83,87,82,88];
 %lfp = ImporterDAT_multi('D:\INI\SemesterArbeitBaran\rTBY33\7_freely_behav_220315_145519\amplifier_ds.dat',256,dHPC_ripple_channels);
@@ -17,10 +20,6 @@ lfp_detrended = detrend(double(lfp'));
 lfp_filtered = filtfilt(d,lfp_detrended);
 
 %% Generate automatic ripple annotations
-% add Buzcode Repo to search path
-addpath(genpath('C:\Users\Linus\Documents\Buzcode'))
-lfp_timestamps = (1:size(lfp_filtered,1))/2000;
-%%
 [ripples_auto] = bz_FindRipples(lfp_detrended(:,2),lfp_timestamps, 'durations',[20 100],'minDuration',5,'frequency',2000,'passband',[180 220],'EMGThresh',0); %Buzsaki uses 20ms for min duration
 
 %% Use Hilbert transform on bandpass filtered trace 86
@@ -32,7 +31,7 @@ viewer = LFPViewer([lfp_detrended lfp_filtered lfp_filtered_hilbert*4],2000,ripp
 %% Load manual ripple annotations
 load("rTBY33S7_ripples_manual.mat")
 %% Invoke LFPViewer
-viewer = LFPViewer([lfp_detrended lfp_filtered lfp_filtered_hilbert (lfp_filtered_hilbert>33)*50],2000,ripples,'rTBY33S7_ripples_manual_v');
+viewer = LFPViewer([lfp_detrended lfp_filtered lfp_filtered_hilbert (lfp_filtered_hilbert>33)*50],2000,ripples,'rTBY33S7_ripples_manual');
 %% Load manual ripple annotations (updated)
 load("rTBY33S7_ripples_manual.mat")
 %% Save back to project folder using Buszaki compatible format (event struct)

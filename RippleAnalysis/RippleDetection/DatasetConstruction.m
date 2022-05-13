@@ -1,5 +1,6 @@
 %% Import Dependencies
-addpath(genpath('D:\INI\SemesterArbeitBaran\RippleAnalysis\RippleDetection'))
+
+addpath(genpath('C:\Users\Linus Meienberg\Documents\MultiAreaBundleProject\RippleAnalysis'))
 %% import downsampled lfp traces of ripple active region
 dHPC_ripple_channels = [120,85,84,86,83,87,82,88];
 lfp = ImporterDAT_multi('D:\INI\SemesterArbeitBaran\rTBY33\7_freely_behav_220315_145519\amplifier_ds.dat',256,dHPC_ripple_channels);
@@ -28,7 +29,7 @@ lfp_timestamps = (1:size(lfp_filtered,1))/2000;
 lfp_filtered_hilbert = abs(hilbert(lfp_filtered));
 lfp_filtered_hilbert_mean = mean(lfp_filtered_hilbert,2);
 % histogram(lfp_filtered_hilbert_mean,100) % inspect bandpass power levels
-detection_meanPowerPeakThreshold = 30;
+detection_meanPowerPeakThreshold = 40;
 detection_minPeakSeparationFrames = 0.02 * 2000;
 [meanPowerPeaksAmplitude, meanPowerPeaksLocation, meanPowerPeakWidth, ~] = findpeaks(lfp_filtered_hilbert_mean,'MinPeakDistance',detection_minPeakSeparationFrames,'MinPeakHeight',detection_meanPowerPeakThreshold);
 % calculate candidate intervals using the detected peak widths
@@ -79,7 +80,9 @@ end
 n_ripples_tot = size(ripples_auto_hi.timestamps,1) + size(ripples_auto_low.timestamps,1) + size(ripples_peakPower,1);
 ripple_timestamps = [ripples_auto_hi.timestamps ; ripples_auto_low.timestamps; ripples_peakPower];
 ripple_classes = [zeros(size(ripples_auto_hi.timestamps,1),1) ; ones(size(ripples_auto_low.timestamps,1),1) ; 2*ones(size(ripples_peakPower,1),1) ];
+ripple_classes = categorical(ripple_classes,[0 1 2],{'bzHigh','bzLow','pp'});
+
 %% Invoke LFPViewer on generated annotations
-viewer = LFPViewer([lfp_detrended lfp_filtered lfp_filtered_hilbert*4],2000,ripple_timestamps,ripple_classes,'rTBY33S7_DS0505_auto');
+viewer = LFPViewer([lfp_detrended lfp_filtered lfp_filtered_hilbert*4],2000,ripple_timestamps,ripple_classes,'rTBY33S7_DS0505_auto',false);
 %% Invoke LFPViewer for manual annotation
 viewer = LFPViewer([lfp_detrended lfp_filtered lfp_filtered_hilbert*4],2000,[],[],'rTBY33S7_DS0505_manual');

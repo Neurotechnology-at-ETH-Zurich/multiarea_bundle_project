@@ -1,13 +1,11 @@
-function fig = LFPViewer(data,samplerate,ripple_timestamps,ripple_classes,outputFileName)
+function fig = LFPViewer(data,samplerate,ripple_timestamps,ripple_classes,outputFileName,readonly)
 %LFPViewer view local field potential recordings and annotated events
-% lfp recordings stored as a timepoints x channels matrix
-% samplerate of the the recordings in Hz
+% data (time,channels) arbitrary time signals that should be visualized
+% samplerate (1,) samplerate of the the timesignal in Hz
 % ripple_timestamps (:,2) start and endpoints of ripples in seconds
-% ripple_classes (:,1) numerical vector containing the class number of each
-% event. Unclassified Ripples are assigned to class 0.
+% ripple_classes (:,1) categorical vector containing the class of each event.
 % outputFileName filename under which to save the annotated ripple
-% timestamps
-
+% readonly (1,) boolean switch wheter event editing is allowed
 
 
 %Parent container
@@ -23,8 +21,10 @@ appdata.n_channels = size(data,2);
 appdata.trace_spacing = 150;
 appdata.ripple_timestamps = ripple_timestamps; % ripple timestamps
 assert(size(ripple_timestamps,1)==size(ripple_classes,1),'ripple_timestamps and ripple_classes do not agree in dimension');
-appdata.ripple_classes = ripple_classes; % class id of ripples
+assert(iscategorical(ripple_classes),'ripple_classes needs to be a categorical vector');
+appdata.ripple_classes = ripple_classes; % category of ripple events
 appdata.outputFileName = outputFileName; % filename to save ripple result
+appdata.readonly = readonly;
 
 %state flags and data fields for appending new ripples to the list
 appdata.isSelectingStart = false;
@@ -32,41 +32,46 @@ appdata.selectedStartTimestamp = 0;
 appdata.isSelectingEnd = false;
 appdata.selectedEndTimestamp = 0;
 
-% generate colormap for patches
-appdata.colormap = hsv(10); % (num_classes,3) list of rgb tripples
-order = [2 6 10 4 8 3 7 1 5 9];
-appdata.colormap = appdata.colormap(order,:); % shuffle colors for better distinction of colors between contigous classes
-
 %help message
-appdata.helpMessage = 'left/right arrow : prev/next frame, up/down arrow : prev/next ripple , j : jump,  a : add, d: delete, 0...9 : assign class';
+if appdata.readonly
+    appdata.helpMessage = 'READONLY | left/right arrow : prev/next frame, up/down arrow : prev/next ripple , j : jump';
+else
+    appdata.helpMessage = strcat('left/right arrow : prev/next frame, up/down arrow : prev/next ripple , j : jump',newline, ...
+        ' a : add, d: delete, l : label, s : save, r/n : rename/new class');
+end
 
 %state flags and data fields for deleting existing ripples
 appdata.isDeleting = false;
 appdata.deletionTimestamp = 0;
-
 guidata(fig,appdata);
 
 %layout
-gl = uigridlayout(fig,[2 1]);
+gl = uigridlayout(fig,[2 2]);
 gl.RowHeight = {'fit','1x'};
-gl.ColumnWidth = {'1x'};
+gl.ColumnWidth = {'fit','1x'};
 
 %Create components
 fig_label = uilabel(gl);
 fig_axes = uiaxes(gl);
+fig_listbox = uilistbox(gl);
 
 %Position Components
 fig_label.Layout.Row = 1;
-fig_label.Layout.Column = 1;
+fig_label.Layout.Column = [1 2];
 fig_axes.Layout.Row = 2;
-fig_axes.Layout.Column = 1;
+fig_axes.Layout.Column = 2;
+fig_listbox.Layout.Row = 2;
+fig_listbox.Layout.Column = 1;
 
-% Configure Components
+% Initialize GUI
 fig_label.Text = appdata.helpMessage;
+updateClasses(fig,fig_listbox); % initial call of updateClasses
 drawLFP(fig,fig_axes); % trigger inital plot
 
+
+
 %App Behaviour
-fig.KeyPressFcn = {@ProcessKeyPress, fig_axes, fig_label};
+fig.KeyPressFcn = {@ProcessKeyPress, fig_axes, fig_label, fig_listbox};
 fig.WindowButtonDownFcn = {@(src,event)uiresume(src)}; % call uiresume on click
 
 end
@@ -98,8 +103,6 @@ ylabel(uiaxes,'');
 % query y extent of plot
 yc = uiaxes.YLim;
 
-
-
 % visualize ripple intervals by rectangular annotations
 for i = 1:size(ripple_timestamps,1)
     % get intervall and check visibility
@@ -118,10 +121,11 @@ for i = 1:size(ripple_timestamps,1)
 
         % extract class id and map to color
         class = appdata.ripple_classes(i);
-        color = appdata.colormap(class+1,:);
+        class_index = class == categories(appdata.ripple_classes); % get index of ripple class
+        color = appdata.colormap(class_index,:);
 
         patch(uiaxes,px,py,color,'FaceAlpha',0.3,'EdgeColor','none');
-        text(uiaxes,xc(1),yc(1)+200,int2str(class)); % display class label in top left corner
+        text(uiaxes,xc(1),yc(1)+200,class); % display class label in top left corner
 
     end
 
@@ -130,7 +134,7 @@ end
 
 end
 
-function ProcessKeyPress(src,event,uiaxes,fig_label)
+function ProcessKeyPress(src,event,uiaxes,fig_label,fig_listbox)
 % extract data from parent figure
 appdata = guidata(src);
 display_start = appdata.displayInterval(1);
@@ -180,6 +184,10 @@ switch event.Key
             display_end = appdata.framecount;
         end
     case 'a' % add ripple interval
+        % check if we have write permission
+        if appdata.readonly
+            return
+        end
         % check that we are currently not selecting an end point
         if ~appdata.isSelectingEnd
             fig_label.Text = 'Click to select event start point';
@@ -202,12 +210,17 @@ switch event.Key
             appdata.isSelectingEnd = false;
             src.Pointer = 'arrow';
             fig_label.Text = appdata.helpMessage;
+
             % append new ripple to all property lists of ripples
             new_interval = sort([appdata.selectedStartTimestamp appdata.selectedEndTimestamp]);
-            appdata.ripple_timestamps = [appdata.ripple_timestamps; new_interval];
-            appdata.ripple_classes = [appdata.ripple_classes; 0]; % create unlabeled ripples by default
+            appdata.ripple_timestamps(end+1,:) = new_interval;
+            appdata.ripple_classes(end+1) = fig_listbox.Value; % newly created ripples are labeled with the currently active class
         end
     case 'd' % delete ripple interval
+        % check if we have write permission
+        if appdata.readonly
+            return
+        end
         % get user input
         fig_label.Text = 'Click to delete interval containing point';
         src.Pointer = 'left';
@@ -228,16 +241,26 @@ switch event.Key
         % delete ripples from all property lists of ripples
         appdata.ripple_timestamps(to_delete,:) = []; % delete outside of for loop to prevent index errors
         appdata.ripple_classes(to_delete) = [];
+        % drop unused categories if any
+        appdata.ripple_classes = removecats(appdata.ripple_classes);
     case 's' % save ripples
+        % check if we have write permission
+        if appdata.readonly
+            return
+        end
         ripple_timestamps = appdata.ripple_timestamps;
         ripple_classes = appdata.ripple_classes;
         save(appdata.outputFileName,"ripple_timestamps","ripple_classes");
         message = {'Saving Succesfull!',strcat('Saved ripple timestamps to ',appdata.outputFileName,'.mat')};
         uialert(src,message,'Saving Successfull','Icon','success');
-    case {'0','1','2','3','4','5','6','7','8','9'}
+    case 'l' % LABEL with active class
+        % check if we have write permission
+        if appdata.readonly
+            return
+        end
         classID = round(str2double(event.Key));
         % get user input
-        fig_label.Text = strcat('Click to label intervall with class ID ',event.Key);
+        fig_label.Text = strcat('Click to label intervall as',fig_listbox.Value);
         src.Pointer = 'left';
         uiwait(src); % wait for click and get timestamp
         selection_point = uiaxes.CurrentPoint(1,1);
@@ -252,7 +275,7 @@ switch event.Key
             end
         end
         % assign class ID to ripples
-        appdata.ripple_classes(to_label) = classID;
+        appdata.ripple_classes(to_label) = fig_listbox.Value;
 
     case 'j'
         % jump to target timestamp
@@ -271,14 +294,51 @@ switch event.Key
             display_start = max([round(targetFrame - intervall_length/2), 1]); % restrict intervall to beginning if necessary
             display_end = min([display_start + intervall_length, appdata.framecount]); % restrict intervall to eof if we would extend past it
         end
-
+    case 'r' % rename class
+        % get active class
+        active_class = fig_listbox.Value;
+        % promt user to get new category label
+        new_label = inputdlg('Enter new class label','Rename Class');
+        if ~ismember(new_label,categories(appdata.ripple_classes))
+            % rename category
+            appdata.ripple_classes = renamecats(appdata.ripple_classes,active_class,new_label);
+        else
+            'LFPViewer rename : label allready in use'
+        end
+    case 'n' % new class
+        % promt user to get new category label
+        new_label = inputdlg('Enter new class label','Add Class');
+        if ~ismember(new_label,categories(appdata.ripple_classes))
+            % rename category
+            appdata.ripple_classes = addcats(appdata.ripple_classes,new_label);
+        else
+            'LFPViewer rename : label allready in use'
+        end
 end
 
 % update application data and write back to parent
 appdata.displayInterval = [display_start display_end];
 guidata(src,appdata);
 
+if ismember(event.Key,{'a','d','l','r','n'})
+    % after commands that modify classes, update them
+    updateClasses(src,fig_listbox); % since this has side effects in appdata make sure that we write back modifications from above before invoking it
+end
+
 % update the plot
 drawLFP(src,uiaxes);
 
+end
+
+function updateClasses(fig,fig_listbox)
+% update class related information
+appdata = guidata(fig);
+
+% generate colormap for patches
+appdata.classes_n = numel(categories(appdata.ripple_classes)); % count number of categories
+appdata.colormap = hsv(appdata.classes_n); % (num_classes,3) list of rgb tripples
+
+% update class list in listbox
+fig_listbox.Items = categories(appdata.ripple_classes);
+guidata(fig,appdata);
 end
