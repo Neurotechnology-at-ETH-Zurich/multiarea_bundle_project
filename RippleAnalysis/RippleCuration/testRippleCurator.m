@@ -3,7 +3,7 @@
 %% Import libaries
 % Buzcode GitHub Repo
 addpath(genpath("C:\Users\Linus Meienberg\Documents\Buzcode"));
-addpath(genpath('D:\INI\SemesterArbeitBaran\RippleAnalysis'))
+addpath(genpath('C:\Users\Linus Meienberg\Documents\MultiAreaBundleProject\RippleAnalysis'))
 
 %% Script Parameters
 output_dir = "D:\INI\SemesterArbeitBaran\rTBY33\7_freely_behav_220315_145519";
@@ -24,24 +24,12 @@ lfp.bandpass = filtfilt(bandpass,lfp.data);
 lfp.lowpass = filtfilt(lowpass,lfp.data);
 
 
-%% Load Ripple Events from automatic annotation
-load("D:\INI\SemesterArbeitBaran\RippleAnalysis\RippleDetection\220504_DatasetConstruction\rTBY33S7_DS0505_auto_v2.mat")
-ripples.clusterID = ripple_classes+1;
-% 1 : bz_findRipples high
-% 2 : bz_findRipples low
-% 3 : peakPowerMethod
-ripples.timestamps = ripple_timestamps;
-ripples.n = size(ripples.timestamps,1);
-%% Load Feature Table from automatic annotation
-load("D:\INI\SemesterArbeitBaran\RippleAnalysis\RippleDetection\220504_DatasetConstruction\rTBY33S7_DS0511_auto_v2_features.mat")
-featureTableAuto = featureTable;
-ripples.centers = table2array(featureTable(:,'center Timepoint'));
 %% Load Ripple Events from manual annotation
-load("D:\INI\SemesterArbeitBaran\RippleAnalysis\RippleDetection\220504_DatasetConstruction\rTBY33S7_DS0505_manual.mat")
-ripplesManual.clusterID = ripple_classes+1;
-% 4 : SPWR
-% 5 : Ripple
-% 6 : false Positive
+load("C:\Users\Linus Meienberg\Documents\MultiAreaBundleProject\RippleAnalysis\RippleDetection\rTBY33S7_DS0505_manual.mat")
+ripplesManual.clusterID = ripple_classes;
+% 0 : SPWR
+% 1 : Ripple
+% 2 : false Positive
 ripplesManual.timestamps = ripple_timestamps;
 ripplesManual.n = size(ripplesManual.timestamps,1);
 %% Load Feature Table from manual annotation
@@ -49,8 +37,9 @@ load("D:\INI\SemesterArbeitBaran\RippleAnalysis\RippleDetection\220504_DatasetCo
 featureTableManual = featureTable;
 ripplesManual.centers = table2array(featureTableManual(:,'center Timepoint'));
 
-%%
+%% Convert Ripple ID to categorical array
+ripple_categories = categorical(ripplesManual.clusterID,[0 1 2],{'SPWR','R','fp'});
 
 
 %% Spin up RippleCurator
-c = RippleCurator(2000,lfp.lowpass,ripplesManual.timestamps,ripplesManual.centers,ripplesManual.clusterID,featureTableManual);
+c = RippleCurator(2000,lfp.lowpass,ripplesManual.timestamps,ripplesManual.centers,ripple_categories,featureTableManual);
