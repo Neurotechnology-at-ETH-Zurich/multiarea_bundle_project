@@ -1,8 +1,9 @@
-function fig = LFPViewer(data,samplerate,ripple_timestamps,ripple_classes,outputFileName,readonly)
+function fig = LFPViewer(data,samplerate,ripple_timestamps,ripple_centers,ripple_classes,outputFileName,readonly)
 %LFPViewer view local field potential recordings and annotated events
 % data (time,channels) arbitrary time signals that should be visualized
 % samplerate (1,) samplerate of the the timesignal in Hz
 % ripple_timestamps (:,2) start and endpoints of ripples in seconds
+% ripple_centers (:,1) center timepoints of ripples in seconds
 % ripple_classes (:,1) categorical vector containing the class of each event.
 % outputFileName filename under which to save the annotated ripple
 % readonly (1,) boolean switch wheter event editing is allowed
@@ -20,7 +21,9 @@ appdata.framecount = size(data,1);
 appdata.n_channels = size(data,2);
 appdata.trace_spacing = 150;
 appdata.ripple_timestamps = ripple_timestamps; % ripple timestamps
+appdata.ripple_centers = ripple_centers;
 assert(size(ripple_timestamps,1)==size(ripple_classes,1),'ripple_timestamps and ripple_classes do not agree in dimension');
+assert(size(ripple_timestamps,1)==size(ripple_centers,1),'ripple_timestamps and ripple_centers do not agree in dimension');
 assert(iscategorical(ripple_classes),'ripple_classes needs to be a categorical vector');
 appdata.ripple_classes = ripple_classes; % category of ripple events
 appdata.outputFileName = outputFileName; % filename to save ripple result
@@ -34,15 +37,17 @@ appdata.selectedEndTimestamp = 0;
 
 %help message
 if appdata.readonly
-    appdata.helpMessage = 'READONLY | left/right arrow : prev/next frame, up/down arrow : prev/next ripple , j : jump';
+    appdata.helpMessage = 'READONLY | left/right arrow : prev/next frame, (shift) up/down arrow : prev/next (active) ripple, j : jump';
 else
-    appdata.helpMessage = strcat('left/right arrow : prev/next frame, up/down arrow : prev/next ripple , j : jump',newline, ...
+    appdata.helpMessage = strcat('left/right arrow : prev/next frame, (shift) up/down arrow : prev/next (active) ripple, j : jump',newline, ...
         ' a : add, d: delete, l : label, s : save, r/n : rename/new class');
 end
 
 %state flags and data fields for deleting existing ripples
 appdata.isDeleting = false;
 appdata.deletionTimestamp = 0;
+
+% save appdata 
 guidata(fig,appdata);
 
 %layout
@@ -68,11 +73,11 @@ fig_label.Text = appdata.helpMessage;
 updateClasses(fig,fig_listbox); % initial call of updateClasses
 drawLFP(fig,fig_axes); % trigger inital plot
 
-
-
 %App Behaviour
 fig.KeyPressFcn = {@ProcessKeyPress, fig_axes, fig_label, fig_listbox};
 fig.WindowButtonDownFcn = {@(src,event)uiresume(src)}; % call uiresume on click
+
+
 
 end
 
@@ -88,6 +93,7 @@ data_slice_stop = appdata.displayInterval(2);
 data_slice = appdata.data(data_slice_start:data_slice_stop,:);
 timestamps = (data_slice_start:data_slice_stop)/appdata.samplerate;
 ripple_timestamps = appdata.ripple_timestamps;
+ripple_centers = appdata.ripple_centers;
 
 % verticaly space data by adding offset values
 trace_offset = (1:appdata.n_channels) * appdata.trace_spacing;
@@ -128,8 +134,19 @@ for i = 1:size(ripple_timestamps,1)
         text(uiaxes,xc(1),yc(1)+200,class); % display class label in top left corner
 
     end
+end
 
-
+% calculate ripple center frames and check visibility
+ripple_centers_frames = ripple_centers * appdata.samplerate;
+visible_centers = (data_slice_start <= ripple_centers_frames) & (ripple_centers_frames <= data_slice_stop);
+visible_centers_index = find(visible_centers);
+% visualize ripple centers using vertical lines
+for index = visible_centers_index' % iterate over entries of row vector
+    % extract class id and map to color
+    class = appdata.ripple_classes(index);
+    class_index = (class == categories(appdata.ripple_classes)); % get index of ripple class
+    color = appdata.colormap(class_index,:);
+    xline(uiaxes,ripple_centers(index),'Color',color);
 end
 
 end
@@ -151,15 +168,34 @@ switch event.Key
             display_start = 1;
             display_end = intervall_length;
         end
+
+    case 'rightarrow'
+        if display_end + intervall_length <= appdata.framecount
+            display_start = display_start + intervall_length;
+            display_end = display_end + intervall_length;
+        else
+            display_start = appdata.framecount - intervall_length;
+            display_end = appdata.framecount;
+        end
     case 'uparrow'
         % calculate current center frame and timestamp
         centerFrame = (display_start+display_end)/2;
         centerTimestamp = centerFrame / appdata.samplerate;
         % find first ripple onset after center timestamp
-        first_ripple = find(appdata.ripple_timestamps(:,1)>centerTimestamp+0.001,1);  % allow up to 1 ms rounding error
-        if ~isempty(first_ripple)
+        onset_delay = appdata.ripple_timestamps(:,1) - (centerTimestamp+0.001); % add small number to make delay negative for current ripple
+        onset_delay(onset_delay <= 0) = inf; % assign infinite delay to all ripples preceding current timepoint
+        
+        % if modifier shift is active, restrict candidates to the currently
+        % active class
+        if ismember('shift',event.Modifier)
+            active = appdata.ripple_classes == fig_listbox.Value;
+            onset_delay(~active) = inf;
+        end
+
+        [next_ripple_delay, next_ripple_index] = min(onset_delay);
+        if next_ripple_delay ~= inf
             % if it exists make it the new center
-            future = appdata.ripple_timestamps(first_ripple,1) * appdata.samplerate; % get frame number of next ripple
+            future = appdata.ripple_timestamps(next_ripple_index,1) * appdata.samplerate; % get frame number of next ripple
             display_start = max([round(future - intervall_length/2), 1]); % restrict intervall to beginning if necessary
             display_end = min([display_start + intervall_length, appdata.framecount]); % restrict intervall to eof if we would extend past it
         end
@@ -168,20 +204,23 @@ switch event.Key
         centerFrame = (display_start+display_end)/2;
         centerTimestamp = centerFrame / appdata.samplerate;
         % find last ripple onset before center timestamp
-        last_ripple = find(appdata.ripple_timestamps(:,1)<centerTimestamp-0.001,1,'last'); % allow up to 1 ms rounding error
-        if ~isempty(last_ripple)
+        %last_ripple = find(appdata.ripple_timestamps(:,1)<centerTimestamp-0.001,1,'last'); % allow up to 1 ms rounding error
+        onset_delay = appdata.ripple_timestamps(:,1) - (centerTimestamp-0.001); % subtract small number to make delay positive for current ripple
+        onset_delay(onset_delay >= 0) = -inf; % assign infinite delay to all ripples following current timepoint
+
+        % if modifier shift is active, restrict candidates to the currently
+        % active class
+        if ismember('shift',event.Modifier)
+            active = appdata.ripple_classes == fig_listbox.Value;
+            onset_delay(~active) = -inf;
+        end
+
+        [next_ripple_delay, next_ripple_index] = max(onset_delay);
+        if next_ripple_delay ~= -inf
             % if it exists make it the new center
-            past = appdata.ripple_timestamps(last_ripple,1) * appdata.samplerate; % get frame number of next ripple
+            past = appdata.ripple_timestamps(next_ripple_index,1) * appdata.samplerate; % get frame number of next ripple
             display_start = max([round(past - intervall_length/2),1]); % restrict intervall to beginning if necessary
             display_end = min([display_start + intervall_length, appdata.framecount]); % restrict intervall to eof if we would extend past it
-        end
-    case 'rightarrow'
-        if display_end + intervall_length <= appdata.framecount
-            display_start = display_start + intervall_length;
-            display_end = display_end + intervall_length;
-        else
-            display_start = appdata.framecount - intervall_length;
-            display_end = appdata.framecount;
         end
     case 'a' % add ripple interval
         % check if we have write permission
@@ -320,14 +359,13 @@ end
 appdata.displayInterval = [display_start display_end];
 guidata(src,appdata);
 
-if ismember(event.Key,{'a','d','l','r','n'})
-    % after commands that modify classes, update them
-    updateClasses(src,fig_listbox); % since this has side effects in appdata make sure that we write back modifications from above before invoking it
-end
+%if ismember(event.Key,{'a','d','l','r','n','space'})
+% after commands that modify classes, update them
+updateClasses(src,fig_listbox); % since this has side effects in appdata make sure that we write back modifications from above before invoking it
+%end
 
 % update the plot
 drawLFP(src,uiaxes);
-
 end
 
 function updateClasses(fig,fig_listbox)

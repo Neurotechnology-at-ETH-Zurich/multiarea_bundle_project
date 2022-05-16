@@ -23,6 +23,8 @@ classdef RippleCurator < handle
         cluster_window
         cluster_axis
 
+        lfp_viewer
+
         % application data fields
         cluster_n % the number of clusters including deleted ripples
         cluster_labels % cell array of strings holding cluster category names
@@ -61,6 +63,17 @@ classdef RippleCurator < handle
             curator.ripple_clusterID = addcats(curator.ripple_clusterID,'deleted');
             curator.updateClusters();
 
+            % start up the lfp viewer in read only mode
+            curator.lfp_viewer = LFPViewer(lfp_signal,lfp_samplerate,ripple_timestamps,ripple_centers,ripple_categories,"",true);
+
+            % Arrange windows on screen
+            screen_size = get(0,'ScreenSize');
+            width = screen_size(3);
+            height = screen_size(4);
+            curator.feature_window.Position = [1 height*0.3 width*0.6 height*0.65];
+            curator.cluster_window.Position = [width*0.65 height*0.05 width*0.3 height*0.9];
+            curator.lfp_viewer.Position = [1 height*0.05 width*0.6 height*0.2];
+            
             % extract rippleEpisodes
             curator.extractRippleEpisodes();
 
@@ -220,18 +233,22 @@ classdef RippleCurator < handle
                 case 's' % SELECTION
                     curator.splitClusters();
                     curator.updateClusters();
-
+                    curator.updateLFPViewer();
                 case 'd' % DELETE
                     curator.deleteClusters();
                     curator.updateClusters();
+                    curator.updateLFPViewer();
                 case 'a' % ALIGN
                     curator.alignClusters();
+                    curator.updateLFPViewer();
                 case 'm' % MERGE
                     curator.mergeClusters();
                     curator.updateClusters();
+                    curator.updateLFPViewer();
                 case 'r' % RENAME
                     curator.renameCluster();
                     curator.updateClusters();
+                    curator.updateLFPViewer();
                 case 'w' % SAVE
                     ripple_timestamps = curator.ripple_timestamps;
                     ripple_center_timestampls = curator.ripple_centers;
@@ -257,6 +274,7 @@ classdef RippleCurator < handle
                 case 'OK'
                     delete(curator.cluster_window);
                     delete(curator.feature_window);
+                    delete(curator.lfp_viewer);
                 case 'Cancel'
             end
             % Send the most relevant data to the workspace as a session
@@ -313,6 +331,17 @@ classdef RippleCurator < handle
             curator.feature_clusterListbox.Value = setdiff(curator.cluster_labels,'deleted','stable'); % select all by default
         end
 
+        function updateLFPViewer(curator)
+            % extract appdata
+            data = guidata(curator.lfp_viewer);
+            % update cluster related data fields
+            data.ripple_timestamps = curator.ripple_timestamps;
+            data.ripple_centers = curator.ripple_centers;
+            data.ripple_classes = curator.ripple_clusterID;
+            % write back to appdata
+            guidata(curator.lfp_viewer,data);
+        end
+
         function alignClusters(curator)
             % Refine centerpoints within each cluster
             % Set Window Length for Event Alignment
@@ -321,8 +350,8 @@ classdef RippleCurator < handle
             eventWindowHalfFrames = round(eventWindowFrames /2); % extend central frame by this amount into both directions
             eventWindowFrames = 2*eventWindowHalfFrames + 1; % effective episode length
             % iterate over clusters
-            for cluster_index = 1:curator.cluster_n
-                members = curator.ripple_clusterID == cluster_index;
+            for cluster = setdiff(categories(curator.ripple_clusterID),{'deleted'},'stable')'
+                members = curator.ripple_clusterID == cluster;
                 center_frames = round(curator.ripple_centers(members)*curator.lfp_samplerate);
                 % use cross correlation based alignment to line up the
                 % ripple episodes of each cluster

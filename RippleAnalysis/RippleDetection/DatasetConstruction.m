@@ -83,6 +83,7 @@ ripple_classes = [zeros(size(ripples_auto_hi.timestamps,1),1) ; ones(size(ripple
 ripple_classes = categorical(ripple_classes,[0 1 2],{'bzHigh','bzLow','pp'});
 
 %% Invoke LFPViewer on generated annotations
-viewer = LFPViewer([lfp_detrended lfp_filtered lfp_filtered_hilbert*4],2000,ripple_timestamps,ripple_classes,'rTBY33S7_DS0505_auto',false);
+centers = sum(ripple_timestamps,2)/2;
+viewer = LFPViewer([lfp_detrended lfp_filtered lfp_filtered_hilbert*4],2000,ripple_timestamps,centers,ripple_classes,'rTBY33S7_DS0505_auto',false);
 %% Invoke LFPViewer for manual annotation
 viewer = LFPViewer([lfp_detrended lfp_filtered lfp_filtered_hilbert*4],2000,[],[],'rTBY33S7_DS0505_manual');
