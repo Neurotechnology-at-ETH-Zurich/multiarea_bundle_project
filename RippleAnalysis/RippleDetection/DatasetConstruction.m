@@ -9,7 +9,7 @@ lfp = ImporterDAT_multi('D:\INI\SemesterArbeitBaran\rTBY33\7_freely_behav_220315
 %% filter traces
 % design a digital band-pass filter for the frequency range from 130Hz to 245Hz
 % This isolates the lfp events in the 
-d=designfilt('bandpassfir','FilterOrder',600,'StopbandFrequency1',125,'PassbandFrequency1',130,'PassbandFrequency2',200,'StopbandFrequency2',205,'SampleRate',2000);
+d=designfilt('bandpassfir','FilterOrder',600,'StopbandFrequency1',125,'PassbandFrequency1',130,'PassbandFrequency2',245,'StopbandFrequency2',250,'SampleRate',2000);
 % freqz(d,600) % visualize filter transfer function 
 % perform zero phase digital filtering => no phase distortions in the
 % signal, end effect equals to a filter with a transfer function equal to
@@ -22,19 +22,23 @@ lfp_filtered = filtfilt(d,lfp_detrended);
 addpath(genpath('C:\\Users\\Linus Meienberg\\Documents\\Buzcode'));
 lfp_timestamps = (1:size(lfp_filtered,1))/2000;
 %% Detect Ripples using different detector settings
-[ripples_auto_hi] = bz_FindRipples(lfp_detrended(:,2),lfp_timestamps, 'durations',[20 100],'minDuration',5,'frequency',2000,'passband',[180 220],'EMGThresh',0); %Buzsaki uses 20ms for min duration
-[ripples_auto_low] = bz_FindRipples(lfp_detrended(:,2),lfp_timestamps, 'durations',[20 100],'minDuration',5,'frequency',2000,'passband',[120 220],'EMGThresh',0);
+[ripples_auto_hi] = bz_FindRipples(lfp_detrended(:,1),lfp_timestamps, 'durations',[20 100],'minDuration',5,'frequency',2000,'passband',[180 220],'EMGThresh',0); %Buzsaki uses 20ms for min duration
+[ripples_auto_low] = bz_FindRipples(lfp_detrended(:,1),lfp_timestamps, 'durations',[20 100],'minDuration',5,'frequency',2000,'passband',[120 220],'EMGThresh',0);
 
 %% Detect Ripples from bandpass power signal
 lfp_filtered_hilbert = abs(hilbert(lfp_filtered));
 lfp_filtered_hilbert_mean = mean(lfp_filtered_hilbert,2);
 % histogram(lfp_filtered_hilbert_mean,100) % inspect bandpass power levels
 detection_meanPowerPeakThreshold = 40;
-detection_minPeakSeparationFrames = 0.02 * 2000;
-[meanPowerPeaksAmplitude, meanPowerPeaksLocation, meanPowerPeakWidth, ~] = findpeaks(lfp_filtered_hilbert_mean,'MinPeakDistance',detection_minPeakSeparationFrames,'MinPeakHeight',detection_meanPowerPeakThreshold);
+detection_minPeakSeparationFrames = 0.01 * 2000;
+detection_minPeakWidth = 0.010 * 2000; % minimum peak width / event duration
+[meanPowerPeaksAmplitude, meanPowerPeaksLocation, meanPowerPeakWidth, ~] = findpeaks(lfp_filtered_hilbert_mean,'MinPeakDistance',...
+    detection_minPeakSeparationFrames,'MinPeakHeight',detection_meanPowerPeakThreshold,...
+    'MinPeakWidth',detection_minPeakWidth);
 % calculate candidate intervals using the detected peak widths
 n_candidates = numel(meanPowerPeaksAmplitude);
-candidate_intervals = [ meanPowerPeaksLocation - meanPowerPeakWidth, meanPowerPeaksLocation + meanPowerPeakWidth ] / 2000;
+duration = min(meanPowerPeakWidth,150); % restrict half width to 300 frames (150ms@2kHz) max
+candidate_intervals = [ meanPowerPeaksLocation - duration, meanPowerPeaksLocation + duration ] / 2000;
 % merge overlapping and close events
 detection_eventMergeTolerance = 0.01; % merge events that begin up to tolerance ms after prior event ended
 

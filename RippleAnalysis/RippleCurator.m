@@ -251,11 +251,11 @@ classdef RippleCurator < handle
                     curator.updateLFPViewer();
                 case 'w' % SAVE
                     ripple_timestamps = curator.ripple_timestamps;
-                    ripple_center_timestampls = curator.ripple_centers;
+                    ripple_center_timestamps = curator.ripple_centers;
                     ripple_classes = curator.ripple_clusterID;
                     savepath = uiputfile('curated_ripples.mat');
                     if savepath ~= 0
-                        save(savepath,"ripple_timestamps","ripple_classes","ripple_center_timestampls");
+                        save(savepath,"ripple_timestamps","ripple_classes","ripple_center_timestamps");
                         message = {'Saving Succesfull!',strcat('Saved ripple timestamps to ',savepath,'.mat')};
                         uialert(src,message,'Saving Successfull','Icon','success');
                     end
