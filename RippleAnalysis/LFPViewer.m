@@ -1,11 +1,10 @@
-function fig = LFPViewer(data,samplerate,ripple_timestamps,ripple_centers,ripple_classes,outputFileName,readonly)
+function fig = LFPViewer(data,samplerate,ripple_timestamps,ripple_centers,ripple_classes,readonly)
 %LFPViewer view local field potential recordings and annotated events
 % data (time,channels) arbitrary time signals that should be visualized
 % samplerate (1,) samplerate of the the timesignal in Hz
 % ripple_timestamps (:,2) start and endpoints of ripples in seconds
 % ripple_centers (:,1) center timepoints of ripples in seconds
 % ripple_classes (:,1) categorical vector containing the class of each event.
-% outputFileName filename under which to save the annotated ripple
 % readonly (1,) boolean switch wheter event editing is allowed
 
 
@@ -26,7 +25,6 @@ assert(size(ripple_timestamps,1)==size(ripple_classes,1),'ripple_timestamps and 
 assert(size(ripple_timestamps,1)==size(ripple_centers,1),'ripple_timestamps and ripple_centers do not agree in dimension');
 assert(iscategorical(ripple_classes),'ripple_classes needs to be a categorical vector');
 appdata.ripple_classes = ripple_classes; % category of ripple events
-appdata.outputFileName = outputFileName; % filename to save ripple result
 appdata.readonly = readonly;
 
 %state flags and data fields for appending new ripples to the list
@@ -289,9 +287,13 @@ switch event.Key
         end
         ripple_timestamps = appdata.ripple_timestamps;
         ripple_classes = appdata.ripple_classes;
-        save(appdata.outputFileName,"ripple_timestamps","ripple_classes");
-        message = {'Saving Succesfull!',strcat('Saved ripple timestamps to ',appdata.outputFileName,'.mat')};
-        uialert(src,message,'Saving Successfull','Icon','success');
+        [savefile,savepath] = uiputfile('curated_ripples.mat');
+        if savefile ~= 0
+            savepath = fullfile(savepath,savefile);
+            save(savepath,"ripple_timestamps","ripple_classes");
+            message = {'Saving Succesfull!',strcat('Saved ripple timestamps to ',savepath,'.mat')};
+            uialert(src,message,'Saving Successfull','Icon','success');
+        end
     case 'l' % LABEL with active class
         % check if we have write permission
         if appdata.readonly

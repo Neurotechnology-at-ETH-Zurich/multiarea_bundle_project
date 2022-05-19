@@ -64,7 +64,7 @@ classdef RippleCurator < handle
             curator.updateClusters();
 
             % start up the lfp viewer in read only mode
-            curator.lfp_viewer = LFPViewer(lfp_signal,lfp_samplerate,ripple_timestamps,ripple_centers,ripple_categories,"",true);
+            curator.lfp_viewer = LFPViewer(lfp_signal,lfp_samplerate,ripple_timestamps,ripple_centers,ripple_categories,true);
 
             % Arrange windows on screen
             screen_size = get(0,'ScreenSize');
@@ -253,8 +253,9 @@ classdef RippleCurator < handle
                     ripple_timestamps = curator.ripple_timestamps;
                     ripple_center_timestamps = curator.ripple_centers;
                     ripple_classes = curator.ripple_clusterID;
-                    savepath = uiputfile('curated_ripples.mat');
-                    if savepath ~= 0
+                    [savefile,savepath] = uiputfile('curated_ripples.mat');
+                    if savefile ~= 0
+                        savepath = fullfile(savepath,savefile);
                         save(savepath,"ripple_timestamps","ripple_classes","ripple_center_timestamps");
                         message = {'Saving Succesfull!',strcat('Saved ripple timestamps to ',savepath,'.mat')};
                         uialert(src,message,'Saving Successfull','Icon','success');

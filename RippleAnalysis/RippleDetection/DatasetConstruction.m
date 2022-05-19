@@ -1,7 +1,17 @@
-%% Import Dependencies
+%% DatasetConstruction
+%
+% This script demonstrates how to detect ripple events in the local field
+% potential data and how the detected events can be inspected and modified
+% using the LFPViewer
+%
+% May 2022, Linus Meienberg
 
+%% Import Dependencies
 addpath(genpath('C:\Users\Linus Meienberg\Documents\MultiAreaBundleProject\RippleAnalysis'))
-%% import downsampled lfp traces of ripple active region
+%% Import downsampled electrophysiological recording
+% for analysis of local field potential events, the high frequency content
+% of the electrophysiological recordings can be ignored. We work with a
+% downsampled recording file which has a samplerate of 2kHz
 dHPC_ripple_channels = [120,85,84,86,83,87,82,88];
 lfp = ImporterDAT_multi('D:\INI\SemesterArbeitBaran\rTBY33\7_freely_behav_220315_145519\amplifier_ds.dat',256,dHPC_ripple_channels);
 %lfp = ImporterDAT_multi('/media/baran/Linus/SemesterArbeitBaran_copy/rTBY33/7_freely_behav_220315_145519/amplifier_ds.dat',256,dHPC_ripple_channels);
