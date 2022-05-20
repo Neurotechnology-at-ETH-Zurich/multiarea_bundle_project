@@ -26,7 +26,7 @@ function generateCommonCoordinates(session)
                 end
             end
             % Realigning chanCoords origin to the centered lower part of the probes (the tip)
-            nChannels = session.animal.probeImplants{i}.nChannels;
+            nChannels = session.animal.probeImplants{i}.nChannel; %fixed the bug: 'nChannels' ->  'nChannel'
             chanCoords1.x = chanCoords.x([1:nChannels]+nChannelsProcessed) - mean(chanCoords.x([1:nChannels]+nChannelsProcessed));
             chanCoords1.y = chanCoords.y([1:nChannels]+nChannelsProcessed) - min(chanCoords.y([1:nChannels]+nChannelsProcessed));
             chanCoords1.z = zeros(size(chanCoords1.y));

@@ -9,7 +9,7 @@ basepathPieces = regexp(basepath, filesep, 'split');
 basename = basepathPieces{end};
 ans_erase = questdlg('Erase previous data?');
 
-if ans_erase == 'Yes'
+if strcmp(ans_erase, 'Yes')
     %delete([basename,'.session.mat']);
     %delete([basename,'.spikes.cellinfo.mat']);
     delete(fullfile(basepath,[basename,'.cell_metrics.cellinfo.mat']));
@@ -18,9 +18,9 @@ if ans_erase == 'Yes'
 end
 
 %% 1.1 loading data
-addpath(genpath("/Users/yuxuanhu/Projects/Spike_sort/rat/amplifier"));
-addpath(genpath("/Users/yuxuanhu/Documents/GitHub/CellExplorer"))
-basepath = '/Users/yuxuanhu/Projects/Spike_sort/rat/amplifier';
+%addpath(genpath("/Users/yuxuanhu/Projects/Spike_sort/rat/amplifier"));
+%addpath(genpath("/Users/yuxuanhu/Documents/GitHub/CellExplorer"))
+%basepath = '/Users/yuxuanhu/Projects/Spike_sort/rat/amplifier';
 
 %% 1.3 creating a session 
 session = sessionTemplate(basepath);

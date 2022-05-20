@@ -104,7 +104,7 @@ if ~isfield(session,'extracellular') || (isfield(session,'extracellular') && (~i
     session.extracellular.nSpikeGroups = session.extracellular.nElectrodeGroups;
 end
 if ~isfield(session,'extracellular') || (isfield(session,'extracellular') && (~isfield(session.extracellular,'leastSignificantBit')) || isempty(session.extracellular.leastSignificantBit))
-    session.extracellular.leastSignificantBit = 0.195; % (in µV) Intan = 0.195, Amplipex = 0.3815
+    session.extracellular.leastSignificantBit = 0.195; % (in ï¿½V) Intan = 0.195, Amplipex = 0.3815
 end
 if ~isfield(session,'extracellular') || (isfield(session,'extracellular') && (~isfield(session.extracellular,'probeDepths')) || isempty(session.extracellular.probeDepths))
     session.extracellular.probeDepths = 0;
@@ -174,7 +174,7 @@ if ~isfield(session,'spikeSorting')
         session.spikeSorting{1}.channels = [];
         session.spikeSorting{1}.manuallyCurated = 1;
         session.spikeSorting{1}.notes = '';
-    elseif ~isempty(dir(fullfile(basepath,relativePath,'JRCLUST-4.1.0')))
+    elseif ~isempty(dir(fullfile('/home/baran/Desktop/github/multiarea_bundle_project/','JRCLUST-4.1.1')))
         disp('Spike sorting data detected: JRClust')
         session.spikeSorting{1}.relativePath = relativePath;
         session.spikeSorting{1}.format = 'jrclust';
@@ -215,7 +215,7 @@ if ~isfield(session,'extracellular') && ~isfield(session.extracellular,'chanCoor
         ReadChanCoordsfromPrm(session);
     else
         session.extracellular.chanCoords.layout = 'poly2'; % Probe layout: linear,staggered,poly2,edge,poly3,poly5
-        session.extracellular.chanCoords.verticalSpacing = 10; % (µm) Vertical spacing between sites.
+        session.extracellular.chanCoords.verticalSpacing = 10; % (ï¿½m) Vertical spacing between sites.
     end
 end
 
