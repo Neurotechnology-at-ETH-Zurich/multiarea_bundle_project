@@ -180,7 +180,7 @@ if parameters.forceReload
                disp('loadSpikes: Loading animal behavior')
                disp('for this experiment only, because we need to plot spikes against animal activiities')
                spike_file = load(res_file);
-               behavior = load(behavior_file).video_tracking;
+               behavior = table2array(load(behavior_file).Position_Table);
 
                spikes_num = spike_file.nSpikes;
                cell_num = length(spike_file.unitCount);
@@ -298,15 +298,17 @@ if parameters.forceReload
                end
 
                %% x and y position of the rat
-               spikes.x_pos = cell(1,cell_num);
-               spikes.y_pos = cell(1,cell_num);
-               spikes.behavior_time_stamps = cell(1,cell_num);
+               clean_threshold = [10,15,18];
+               [x_pos, y_pos] = spikes_sortBin (spikes,spike_file,clean_threshold);
+               spikes.x_pos = x_pos;
+               spikes.y_pos = y_pos;
 
-               for i = 1:cell_num
-                    spikes.x_pos{i} = behavior.position.x;
-                    spikes.y_pos{i} = behavior.position.y;
-                    spikes.behavior_time_stamps{i} = behavior.timestamps;
-               end
+               disp("binning done");
+
+               %% generating heatmap
+               grid_size = 20;
+               CalcualteHeatmap(spikes,grid_size,basename,basepath);
+
                %% svaing output as basename.soikes.cellinfo.mat (done)
                %save(fullfile(spikes.processinginfo.params.basepath,[spikes.processinginfo.params.basename,'.spikes.cellinfo.mat']),'spikes');
         case 'phy' % Loading phy

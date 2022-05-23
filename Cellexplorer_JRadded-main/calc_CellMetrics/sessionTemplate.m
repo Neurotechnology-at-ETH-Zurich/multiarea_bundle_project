@@ -174,7 +174,7 @@ if ~isfield(session,'spikeSorting')
         session.spikeSorting{1}.channels = [];
         session.spikeSorting{1}.manuallyCurated = 1;
         session.spikeSorting{1}.notes = '';
-    elseif ~isempty(dir(fullfile('/home/baran/Desktop/github/multiarea_bundle_project/','JRCLUST-4.1.1')))
+    elseif ~isempty(dir(fullfile(basepath,'JRCLUST-4.1.1')))
         disp('Spike sorting data detected: JRClust')
         session.spikeSorting{1}.relativePath = relativePath;
         session.spikeSorting{1}.format = 'jrclust';
