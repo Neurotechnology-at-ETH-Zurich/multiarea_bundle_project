@@ -252,6 +252,7 @@ switch event.Key
             new_interval = sort([appdata.selectedStartTimestamp appdata.selectedEndTimestamp]);
             appdata.ripple_timestamps(end+1,:) = new_interval;
             appdata.ripple_classes(end+1) = fig_listbox.Value; % newly created ripples are labeled with the currently active class
+            appdata.ripple_centers(end+1) = sum(new_interval)/2;
         end
     case 'd' % delete ripple interval
         % check if we have write permission
@@ -278,6 +279,7 @@ switch event.Key
         % delete ripples from all property lists of ripples
         appdata.ripple_timestamps(to_delete,:) = []; % delete outside of for loop to prevent index errors
         appdata.ripple_classes(to_delete) = [];
+        appdata.ripple_centers(to_delete) = [];
         % drop unused categories if any
         appdata.ripple_classes = removecats(appdata.ripple_classes);
     case 's' % save ripples

@@ -7,6 +7,7 @@ classdef RippleCurator < handle
         lfp_samplerate;
         lfp_signal;
         ripple_timestamps;
+        ripple_center_seeds;
         ripple_centers;
         ripple_clusterID;
         ripple_feature_table;
@@ -36,13 +37,12 @@ classdef RippleCurator < handle
     end
 
     methods
-        function curator = RippleCurator(lfp_samplerate, lfp_signal, ripple_timestamps, ripple_centers, ripple_categories, ripple_feature_table)
+        function curator = RippleCurator(lfp_samplerate, lfp_signal, ripple_timestamps, ripple_center_seeds, ripple_categories, ripple_feature_table, lfp_viewer_signal)
             %UNTITLED Construct an instance of this class
             %   ripple_clusterID (:,1) categorical array of cluster
             %   assignments. All ripples deleted in the session will be
             %   assigned to category 'deleted'.
             %   zero is reserved for false positives / deleted ripples.
-            %   Cluster numbering must be contigous.
             
             % basic compatibilty checks
             assert(iscategorical(ripple_categories))
@@ -51,8 +51,9 @@ classdef RippleCurator < handle
             curator.lfp_samplerate = lfp_samplerate;
             curator.lfp_signal = lfp_signal;
             curator.ripple_timestamps = ripple_timestamps;
-            curator.ripple_centers = ripple_centers;
-            curator.ripple_n = numel(ripple_centers);
+            curator.ripple_center_seeds = ripple_center_seeds;
+            curator.ripple_centers = ripple_center_seeds;
+            curator.ripple_n = numel(ripple_center_seeds);
             curator.ripple_clusterID = ripple_categories;
             curator.ripple_feature_table = ripple_feature_table;
            
@@ -61,10 +62,12 @@ classdef RippleCurator < handle
 
             % Initial evaluation of cluster related variables
             curator.ripple_clusterID = addcats(curator.ripple_clusterID,'deleted');
+            % remove unused categories
+            curator.ripple_clusterID = removecats(curator.ripple_clusterID);
             curator.updateClusters();
 
             % start up the lfp viewer in read only mode
-            curator.lfp_viewer = LFPViewer(lfp_signal,lfp_samplerate,ripple_timestamps,ripple_centers,ripple_categories,true);
+            curator.lfp_viewer = LFPViewer([lfp_signal lfp_viewer_signal],lfp_samplerate,ripple_timestamps,ripple_center_seeds,ripple_categories,true);
 
             % Arrange windows on screen
             screen_size = get(0,'ScreenSize');
@@ -346,17 +349,17 @@ classdef RippleCurator < handle
         function alignClusters(curator)
             % Refine centerpoints within each cluster
             % Set Window Length for Event Alignment
-            eventWindow = 0.2; % [s] duration of event window
+            eventWindow = 0.1; % [s] duration of event window
             eventWindowFrames = eventWindow*curator.lfp_samplerate; % convert to frame number
             eventWindowHalfFrames = round(eventWindowFrames /2); % extend central frame by this amount into both directions
             eventWindowFrames = 2*eventWindowHalfFrames + 1; % effective episode length
             % iterate over clusters
             for cluster = setdiff(categories(curator.ripple_clusterID),{'deleted'},'stable')'
                 members = curator.ripple_clusterID == cluster;
-                center_frames = round(curator.ripple_centers(members)*curator.lfp_samplerate);
+                seed_frames = round(curator.ripple_center_seeds(members)*curator.lfp_samplerate);
                 % use cross correlation based alignment to line up the
                 % ripple episodes of each cluster
-                updatedCenters = alignRipples(curator.lfp_signal,center_frames,eventWindowFrames);
+                updatedCenters = alignRipples(curator.lfp_signal,seed_frames,eventWindowFrames);
                 curator.ripple_centers(members) = updatedCenters/curator.lfp_samplerate;
             end
             % extract ripple episodes centered at new timepoints

@@ -9,10 +9,11 @@ function alignedCenterFrames  = alignRipples(signal,rippleCenterSeeds,eventWindo
 % eventWindows
 
 % start by using the provided seeds as central frames
+rippleEpisodes.seedFrames = rippleCenterSeeds;
 rippleEpisodes.centralFrames = rippleCenterSeeds;
 
 % extract centered windows around the seeds for each ripple
-eventWindowHalfFrames = round(eventWindowFrames/2);
+eventWindowHalfFrames = floor(eventWindowFrames/2);
 num_ripples = size(rippleCenterSeeds,1);
 for i = 1:num_ripples
     startFrame = rippleEpisodes.centralFrames(i) - eventWindowHalfFrames;
@@ -24,42 +25,48 @@ end
 % signal template constructed by averaging all ripples that are aligned
 % restrict shift to +/- half a ripple cycle
 % ripples ~= 200 Hz  = 10 frame cycle at 2000Hz sampling rate
-maxlag = 2; % < half cycle of ripple signal in frames for stability
+maxlag = 10; % < half cycle of ripple signal in frames for stability
+gamma = 3; % exponent controlls steepness of decay as shift -> maxlag
+stepsize = 2;
 
+% f = waitbar(0, 'Aligning ripples...');
+% for iteration = 1:20
 
-f = waitbar(0, 'Aligning ripples...');
-for iteration = 1:20
+% calculate alignment template 
+%mean_waveform = mean(rippleEpisodes.episodes,1);
 
-    % calculate alignment template (time x channels)
-    mean_waveform = mean(rippleEpisodes.episodes,1);
+% emphasize alignment in the central region of the ripple by tampering the
+% signal using a hamming window
+%template = mean_waveform(:) .* hamming(numel(mean_waveform));
+window = normalize( normpdf(-eventWindowHalfFrames:eventWindowHalfFrames,0,30),'range')';
+template = sin(2*pi/12*(1:eventWindowFrames))' .* window;
 
-    % emphasize alignment in the central region of the ripple by tampering the
-    % signal using a hamming window
-    template = mean_waveform(:) .* hamming(numel(mean_waveform));
+% greedily align signals to template by shifting them up to maxlag
+for i = 1:num_ripples
+    % find signal offset by maximizing cross correlation
+    [r,lags] = xcorr(template,rippleEpisodes.episodes(i,:),maxlag);
+    % calculate absolute shift to center seed
+    global_lag = rippleEpisodes.centralFrames(i)-rippleEpisodes.seedFrames(i) + lags';
+    corr_tamper = 1-(abs(global_lag)/maxlag).^gamma;
+    [maxr,d] = max(r.*corr_tamper); % get highest cross correlation and its associated delay
+    delay = d - maxlag - 1; % negative d => pad ripple A, positive d => pad rippleB
+    offset = -delay;
 
-    % greedily align signals to template by shifting them up to maxlag
-    for i = 1:num_ripples
-        % find signal offset by maximizing cross correlation
-        r = xcorr(template,rippleEpisodes.episodes(i,:),maxlag);
-        [maxr,d] = max(r); % get highest cross correlation and its associated delay
-        delay = d - maxlag - 1; % negative d => pad ripple A, positive d => pad rippleB
-        offset = -delay;
-
-        % shift the central frame of the aligned event
-        rippleEpisodes.centralFrames(i) = rippleEpisodes.centralFrames(i) + offset;
-        % extract the updated episode if the episode was shifted
-        if offset ~= 0
-            startFrame = rippleEpisodes.centralFrames(i) - eventWindowHalfFrames;
-            endFrame = rippleEpisodes.centralFrames(i) + eventWindowHalfFrames;
-            rippleEpisodes.episodes(i,:) = signal(startFrame:endFrame);
-        end
+    % shift the central frame of the aligned event
+    rippleEpisodes.centralFrames(i) = rippleEpisodes.centralFrames(i) + offset;
+    % extract the updated episode if the episode was shifted
+    if offset ~= 0
+        startFrame = rippleEpisodes.centralFrames(i) - eventWindowHalfFrames;
+        endFrame = rippleEpisodes.centralFrames(i) + eventWindowHalfFrames;
+        rippleEpisodes.episodes(i,:) = signal(startFrame:endFrame);
     end
-    
-
-    % update progress bar
-    waitbar(i/num_ripples, f, sprintf('Progress: %d %%', floor(i/num_ripples*100)));
 end
-close(f)
+    
+% 
+%     % update progress bar
+%     waitbar(i/num_ripples, f, sprintf('Progress: %d %%', floor(i/num_ripples*100)));
+% end
+% close(f)
 
 % return the aligned center frames
 alignedCenterFrames = rippleEpisodes.centralFrames;
