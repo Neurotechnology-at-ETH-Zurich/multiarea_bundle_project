@@ -1,9 +1,8 @@
 function [Data]=ImporterDAT_multi(filename,TotalChannels,channels)
-% IMPORTERDAT Import ephys recordings from .dat files
-%   [Data] = ImporterDat(filename,TotalChannels,ChannelNumber)
-%   filename : location of input file
-%   TotalChannels : number of channels in the input file
-%   Channels : index array of the channels to import.
+% ImporterDat_multi Import multiple ephys recording channels from .dat files
+%   filename        string  location of input file
+%   TotalChannels   (1,)    number of channels in the input file
+%   Channels        (:,1)   list of the channel numbers to import.
 
 % maps existing file to memory and returns memory map. This allows access
 % to files on disk as if they were in dynamic memory.

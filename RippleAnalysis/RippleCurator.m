@@ -220,6 +220,8 @@ classdef RippleCurator < handle
                 % plot mean episode
                 plot(curator.cluster_axis,(1:eventWindowFrames)/curator.lfp_samplerate,...
                     subsetMeanEpisode+offset,'Color',curator.cluster_colors(cluster_index,:));
+                % add cluster label
+                text(curator.cluster_axis,0,offset,cluster);
                 
                 % increase offset by maximum value
                 offset = offset + abs(max(subsetEpisodes,[],'all'));

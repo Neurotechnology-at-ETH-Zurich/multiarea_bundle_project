@@ -1,17 +1,18 @@
 function plotMeanWaveform(rippleEpisodes, indices)
-%PLOTMEANWAVEFORM display the mean waveform and some samples
-% rippleEpisodes n_ripples x n_samples array of ripples
-% indices a vector of indices indicating which samples to plot
+% plotMeanWaveform plot the mean episode waveform and some random samples
+%   rippleEpisodes  (n_ripples x n_samples)     array of ripples
+%   indices         (:,)                        a vector of indices indicating which samples to plot
 
 arguments
     rippleEpisodes
     indices (:,1) {mustBeInteger}
 end
 
-num_bg = 50;
+num_bg = 50; % the number of background samples to show
 figure();
 subset = rippleEpisodes(indices,:);
 mean_waveform = mean(subset,1);
+% check if we should show all episodes or collect a random subset
 if numel(indices) <= num_bg
     plot(subset','Color',[0.5 0.5 0.5]);
 else
