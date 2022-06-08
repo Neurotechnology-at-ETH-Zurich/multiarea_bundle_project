@@ -94,7 +94,7 @@ addParameter(p,'metricsToExcludeManipulationIntervals',{'waveform_metrics','PCA_
 addParameter(p,'keepCellClassification',true,@islogical);
 addParameter(p,'manualAdjustMonoSyn',true,@islogical);
 addParameter(p,'getWaveformsFromDat',true,@islogical);
-addParameter(p,'includeInhibitoryConnections',false,@islogical);
+addParameter(p,'includeInhibitoryConnections',true,@islogical);
 addParameter(p,'showGUI',false,@islogical);
 addParameter(p,'forceReload',false,@islogical);
 addParameter(p,'forceReloadSpikes',false,@islogical);

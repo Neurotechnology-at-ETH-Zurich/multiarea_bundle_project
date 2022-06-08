@@ -176,7 +176,12 @@ if parameters.forceReload
         case 'jrclust'
                disp('loadSpikes: Loading JRclust data')
                res_file = [basepath,'/',basename,'_res.mat'];
+               behavior_file = [basepath,'/',basename,'.animal.behavior.mat'];
+               disp('loadSpikes: Loading animal behavior')
+               disp('for this experiment only, because we need to plot spikes against animal activiities')
                spike_file = load(res_file);
+               behavior = table2array(load(behavior_file).Position_Table);
+
                spikes_num = spike_file.nSpikes;
                cell_num = length(spike_file.unitCount);
                chan_num = session.extracellular.nChannels;
@@ -285,7 +290,25 @@ if parameters.forceReload
                    spikes.channels_all{i} = double(linspace(1,chan_num,chan_num));
                end
               
-                
+               %% spikes's amplitude for each cell
+               spikes.amplitudes = cell(1,cell_num);
+               for i = 1:cell_num
+                   cluster_spike_list = spike_file.spikesByCluster{i};
+                   spikes.amplitudes{i} = [spikes.amplitudes{i}, spike_file.spikeAmps(cluster_spike_list)];
+               end
+
+               %% x and y position of the rat
+               clean_threshold = [10,15,18];
+               [x_pos, y_pos] = spikes_sortBin (spikes,spike_file,clean_threshold);
+               spikes.x_pos = x_pos;
+               spikes.y_pos = y_pos;
+
+               disp("binning done");
+
+               %% generating heatmap
+               grid_size = 20;
+               CalcualteHeatmap(spikes,grid_size,basename,basepath);
+
                %% svaing output as basename.soikes.cellinfo.mat (done)
                %save(fullfile(spikes.processinginfo.params.basepath,[spikes.processinginfo.params.basename,'.spikes.cellinfo.mat']),'spikes');
         case 'phy' % Loading phy
