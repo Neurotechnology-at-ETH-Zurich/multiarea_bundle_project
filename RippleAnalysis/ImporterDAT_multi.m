@@ -12,7 +12,7 @@ a=memmapfile(filename, 'Format','int16');
 % here we create a new file by appending .new to the input file and open
 % with write permission
 % What is this used for ?
-fid=fopen([filename '.new'], 'w');
+%fid=fopen([filename '.new'], 'w');
 
 chunk_size=1000000;
 
