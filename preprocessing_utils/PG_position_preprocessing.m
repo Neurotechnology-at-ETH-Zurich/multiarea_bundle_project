@@ -38,6 +38,7 @@ obj = VideoReader(fullfile(path,file));
 
 %% Detect rising edge of the TTL AI0 from Intan
 read_Intan_RHD2000_file
+cd(path)
 sample_rate=frequency_parameters.amplifier_sample_rate;
 num_channels = length(board_adc_channels); % ADC input info from header file
 fileinfo = dir('analogin.dat');
