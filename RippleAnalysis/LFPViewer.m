@@ -49,37 +49,63 @@ appdata.deletionTimestamp = 0;
 guidata(fig,appdata);
 
 %layout
-gl = uigridlayout(fig,[2 2]);
-gl.RowHeight = {'fit','1x'};
+gl = uigridlayout(fig,[5 3]);
+gl.RowHeight = {'fit','fit','1x'};
 gl.ColumnWidth = {'fit','1x'};
 
 %Create components
 fig_label = uilabel(gl);
-fig_axes = uiaxes(gl);
 fig_listbox = uilistbox(gl);
+fig_axes = uiaxes(gl);
+fig_axesCWT = uiaxes(gl);
+fig_axesCWT2 = uiaxes(gl);
+fig_axesCWT3 = uiaxes(gl);
+
+fig_axesCWT_slice = uiaxes(gl);
+fig_axesCWT_slice2 = uiaxes(gl);
+fig_axesCWT_slice3 = uiaxes(gl);
 
 %Position Components
 fig_label.Layout.Row = 1;
-fig_label.Layout.Column = [1 2];
-fig_axes.Layout.Row = 2;
-fig_axes.Layout.Column = 2;
+fig_label.Layout.Column = [1 3];
 fig_listbox.Layout.Row = 2;
 fig_listbox.Layout.Column = 1;
+
+fig_axes.Layout.Row = 2;
+fig_axes.Layout.Column = 2;
+
+fig_axesCWT.Layout.Row = 3;
+fig_axesCWT.Layout.Column = 2;
+
+fig_axesCWT_slice.Layout.Row = 3;
+fig_axesCWT_slice.Layout.Column = 3;
+
+fig_axesCWT2.Layout.Row = 4;
+fig_axesCWT2.Layout.Column = 2;
+
+fig_axesCWT_slice2.Layout.Row = 4;
+fig_axesCWT_slice2.Layout.Column = 3;
+
+fig_axesCWT3.Layout.Row = 5;
+fig_axesCWT3.Layout.Column = 2;
+
+fig_axesCWT_slice3.Layout.Row = 5;
+fig_axesCWT_slice3.Layout.Column = 3;
 
 % Initialize GUI
 fig_label.Text = appdata.helpMessage;
 updateClasses(fig,fig_listbox); % initial call of updateClasses
-drawLFP(fig,fig_axes); % trigger inital plot
+drawLFP(fig,fig_axes,fig_axesCWT,fig_axesCWT2,fig_axesCWT3,fig_axesCWT_slice,fig_axesCWT_slice2,fig_axesCWT_slice3); % trigger inital plot
 
 %App Behaviour
-fig.KeyPressFcn = {@processKeyPress, fig_axes, fig_label, fig_listbox};
+fig.KeyPressFcn = {@processKeyPress,fig_axes,fig_axesCWT,fig_axesCWT2,fig_axesCWT3,fig_axesCWT_slice,fig_axesCWT_slice2,fig_axesCWT_slice3,fig_label, fig_listbox};
 fig.WindowButtonDownFcn = {@(src,event)uiresume(src)}; % call uiresume on click
 
 
 
 end
 
-function drawLFP(src, uiaxes)
+function drawLFP(src,uiaxes,uiaxes2,uiaxes3,uiaxes4,uiaxes5,uiaxes6,uiaxes7)
 % drawLFP trigger update of the lfp plot
 % src       the parent uifigure
 % uiaxes    the uiaxes to draw upon
@@ -103,6 +129,41 @@ plot(uiaxes,timestamps,double(data_slice)+offset,'Color',[0.5 0.5 0.5]);
 xlabel(uiaxes,'time [s]');
 xlim(uiaxes,[timestamps(1) timestamps(end)]);
 ylabel(uiaxes,'');
+
+%fig_axesCWT
+[cfs1,freq1] = cwt_mex(single(data_slice(:,5)'),'amor',2000);
+surf(uiaxes2,timestamps,freq1,(abs(cfs1).^2)./(1./double(freq1)),'FaceColor','interp','EdgeColor','none','FaceLighting','gouraud');
+% set(uiaxes2, 'Color','k', 'XColor','k', 'YColor','k','YTick',[5 10 25 50 100 200 250],'YTickLabel',{'5','10','25','50','100','200','250'})
+xlabel(uiaxes2,'time [s]');
+xlim(uiaxes2,[timestamps(1) timestamps(end)]);
+ylim(uiaxes2,[min(freq1) 250]);
+view(uiaxes2,0,90);
+ylabel(uiaxes2,'Frequency [Hz]');
+colormap(uiaxes2,'jet')
+
+
+%fig_axesCWT
+[cfs2,freq2] = cwt_mex(single(data_slice(:,4)'),'amor',2000);
+surf(uiaxes3,timestamps,freq2,(abs(cfs2).^2)./(1./double(freq2)),'FaceColor','interp','EdgeColor','none','FaceLighting','gouraud');
+% set(uiaxes2, 'Color','k', 'XColor','k', 'YColor','k','YTick',[5 10 25 50 100 200 250],'YTickLabel',{'5','10','25','50','100','200','250'})
+xlabel(uiaxes3,'time [s]');
+xlim(uiaxes3,[timestamps(1) timestamps(end)]);
+ylim(uiaxes3,[min(freq2) 250]);
+view(uiaxes3,0,90);
+ylabel(uiaxes3,'Frequency [Hz]');
+colormap(uiaxes3,'jet')
+
+%fig_axesCWT
+[cfs3,freq3] = cwt_mex(single(data_slice(:,3)'),'amor',2000);
+surf(uiaxes4,timestamps,freq3,(abs(cfs3).^2)./(1./double(freq3)),'FaceColor','interp','EdgeColor','none','FaceLighting','gouraud');
+% set(uiaxes2, 'Color','k', 'XColor','k', 'YColor','k','YTick',[5 10 25 50 100 200 250],'YTickLabel',{'5','10','25','50','100','200','250'})
+xlabel(uiaxes4,'time [s]');
+xlim(uiaxes4,[timestamps(1) timestamps(end)]);
+ylim(uiaxes4,[min(freq3) 250]);
+view(uiaxes4,0,90);
+ylabel(uiaxes4,'Frequency [Hz]');
+colormap(uiaxes4,'jet')
+
 
 % query y extent of plot
 yc = uiaxes.YLim;
@@ -134,22 +195,73 @@ for i = 1:size(ripple_timestamps,1)
     end
 end
 
+
+
 % calculate ripple center frames and check visibility
 ripple_centers_frames = ripple_centers * appdata.samplerate;
 visible_centers = (data_slice_start <= ripple_centers_frames) & (ripple_centers_frames <= data_slice_stop);
 visible_centers_index = find(visible_centers);
 % visualize ripple centers using vertical lines
+xlabealling1=[];
+xlabealling2=[];
+xlabealling3=[];
+
 for index = visible_centers_index' % iterate over entries of row vector
     % extract class id and map to color
     class = appdata.ripple_classes(index);
     class_index = (class == categories(appdata.ripple_classes)); % get index of ripple class
     color = appdata.colormap(class_index,:);
     xline(uiaxes,ripple_centers(index),'Color',color);
+    xline(uiaxes2,ripple_centers(index),'Color',color);
+    xline(uiaxes3,ripple_centers(index),'Color',color);
+    xline(uiaxes4,ripple_centers(index),'Color',color);
+
+
+[~,hely]=min(abs((timestamps.*1000)-(ripple_centers(index).*1000)))
+plot(uiaxes5,freq1,(abs(cfs1(:,hely(1))).^2)./(1./double(freq1)));
+xlim(uiaxes5,[1 250])
+
+%set(uiaxes5, 'Color','w', 'XColor','k', 'YColor','k','XScale','log','XTick',[5 10 25 50 100 200],'YTickLabel',{'5','10','25','50','100','200'});
+[~,I]=max((abs(cfs1((freq1>100),hely(1))).^2)./(1./double(freq1((freq1>100)))));
+xlabealling1=[xlabealling1,['FR:' num2str(round(freq1(I))) ' Hz ']];
+xlabel(uiaxes5,xlabealling1);
+hold(uiaxes5,'on');
+
+
+plot(uiaxes6,freq2,(abs(cfs2(:,hely(1))).^2)./(1./double(freq2)));
+xlim(uiaxes6,[1 250])
+
+%set(uiaxes6, 'Color','w', 'XColor','k', 'YColor','k','XScale','log','XTick',[5 10 25 50 100 200],'YTickLabel',{'5','10','25','50','100','200'});
+[~,I]=max((abs(cfs2((freq2>100),hely(1))).^2)./(1./double(freq2((freq2>100)))));
+xlabealling2=[xlabealling2,['FR:' num2str(round(freq2(I))) ' Hz ']];
+xlabel(uiaxes6,xlabealling2);
+hold(uiaxes6,'on');
+hold(uiaxes6,'on');
+
+plot(uiaxes7,freq3,(abs(cfs3(:,hely(1))).^2)./(1./double(freq3)));
+xlim(uiaxes7,[1 250])
+
+%set(uiaxes7, 'Color','w', 'XColor','k', 'YColor','k','XScale','log','XTick',[5 10 25 50 100 200],'YTickLabel',{'5','10','25','50','100','200'});
+[~,I]=max((abs(cfs3((freq3>100),hely(1))).^2)./(1./double(freq3((freq3>100)))));
+xlabealling3=[xlabealling3,['FR:' num2str(round(freq3(I))) ' Hz ']];
+xlabel(uiaxes7,xlabealling3);
+hold(uiaxes7,'on');
+hold(uiaxes7,'on');
+
+
+
 end
+legend(uiaxes5,{num2str(ripple_centers(visible_centers_index'))}, 'Location','northwest')
+% legend(uiaxes6,{num2str(ripple_centers(visible_centers_index'))}, 'Location','northwest')
+% legend(uiaxes7,{num2str(ripple_centers(visible_centers_index'))}, 'Location','northwest')
+
+hold(uiaxes5,'off')
+hold(uiaxes6,'off')
+hold(uiaxes7,'off')
 
 end
 
-function processKeyPress(src,event,uiaxes,fig_label,fig_listbox)
+function processKeyPress(src,event,uiaxes,uiaxes2,uiaxes3,uiaxes4,uiaxes5,uiaxes6,uiaxes7,fig_label,fig_listbox)
 % processKeyPress this callback executes whenever a key is pressed while
 % LFPViewer is active. Here we process all user input, trigger the
 % corresponding actions and maintain the program data fields.
@@ -180,7 +292,7 @@ switch event.Key
             display_start = appdata.framecount - intervall_length;
             display_end = appdata.framecount;
         end
-    case 'uparrow' % jump to the next (active) ripple event
+    case {'uparrow','f'} % jump to the next (active) ripple event
         % calculate current center frame and timestamp
         centerFrame = (display_start+display_end)/2;
         centerTimestamp = centerFrame / appdata.samplerate;
@@ -374,7 +486,7 @@ guidata(src,appdata);
 updateClasses(src,fig_listbox); % since this has side effects in appdata make sure that we write back modifications from above before invoking it
 
 % update the plot
-drawLFP(src,uiaxes);
+drawLFP(src,uiaxes,uiaxes2,uiaxes3,uiaxes4,uiaxes5,uiaxes6,uiaxes7);
 end
 
 function updateClasses(fig,fig_listbox)
