@@ -131,7 +131,7 @@ xlim(uiaxes,[timestamps(1) timestamps(end)]);
 ylabel(uiaxes,'');
 
 %fig_axesCWT
-[cfs1,freq1] = cwt_mex(single(data_slice(:,5)'),'amor',2000);
+[cfs1,freq1] = cwt_mex(single(data_slice(:,4)'),'amor',2000);
 surf(uiaxes2,timestamps,freq1,(abs(cfs1).^2)./(1./double(freq1)),'FaceColor','interp','EdgeColor','none','FaceLighting','gouraud');
 % set(uiaxes2, 'Color','k', 'XColor','k', 'YColor','k','YTick',[5 10 25 50 100 200 250],'YTickLabel',{'5','10','25','50','100','200','250'})
 xlabel(uiaxes2,'time [s]');
@@ -143,7 +143,7 @@ colormap(uiaxes2,'jet')
 
 
 %fig_axesCWT
-[cfs2,freq2] = cwt_mex(single(data_slice(:,4)'),'amor',2000);
+[cfs2,freq2] = cwt_mex(single(data_slice(:,3)'),'amor',2000);
 surf(uiaxes3,timestamps,freq2,(abs(cfs2).^2)./(1./double(freq2)),'FaceColor','interp','EdgeColor','none','FaceLighting','gouraud');
 % set(uiaxes2, 'Color','k', 'XColor','k', 'YColor','k','YTick',[5 10 25 50 100 200 250],'YTickLabel',{'5','10','25','50','100','200','250'})
 xlabel(uiaxes3,'time [s]');
@@ -154,7 +154,7 @@ ylabel(uiaxes3,'Frequency [Hz]');
 colormap(uiaxes3,'jet')
 
 %fig_axesCWT
-[cfs3,freq3] = cwt_mex(single(data_slice(:,3)'),'amor',2000);
+[cfs3,freq3] = cwt_mex(single(data_slice(:,2)'),'amor',2000);
 surf(uiaxes4,timestamps,freq3,(abs(cfs3).^2)./(1./double(freq3)),'FaceColor','interp','EdgeColor','none','FaceLighting','gouraud');
 % set(uiaxes2, 'Color','k', 'XColor','k', 'YColor','k','YTick',[5 10 25 50 100 200 250],'YTickLabel',{'5','10','25','50','100','200','250'})
 xlabel(uiaxes4,'time [s]');
