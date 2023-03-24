@@ -28,7 +28,7 @@ CellID_counter=1;
 
 %you have to be in the folder where selected session are.
 base_folder=pwd;
-listing = dir('F:\Dropbox (Personal)\ETH_DATA\rTBY34');
+listing = dir('F:\Dropbox (Personal)\ETH_DATA\rTBY37');
 
 % getting the folder with the data, eliminate noise from path
 for i=1:numel(listing)
@@ -155,14 +155,14 @@ for nume_files=1:numel(path)
             PutitativeStructure(CellID)={'dHP'};
         elseif  spikeSites(CellID)>128 &  spikeSites(CellID)<=192
             PutitativeStructure( CellID)={'RSC'};
-%         elseif  spikeSites(CellID)>192
-%             PutitativeStructure( CellID)={'mPFC'};
-                    elseif  spikeSites(CellID)>192  &  spikeSites(CellID)<=202
-                        PutitativeStructure( CellID)={'IL'};
-                    elseif   spikeSites(CellID)>202  &  spikeSites(CellID)<=220
-                        PutitativeStructure( CellID)={'PrL'};
-                    elseif   spikeSites(CellID)>220
-                        PutitativeStructure( CellID)={'Cg1'};
+            %         elseif  spikeSites(CellID)>192
+            %             PutitativeStructure( CellID)={'mPFC'};
+        elseif  spikeSites(CellID)>192  &  spikeSites(CellID)<=202
+            PutitativeStructure( CellID)={'IL'};
+        elseif   spikeSites(CellID)>202  &  spikeSites(CellID)<=220
+            PutitativeStructure( CellID)={'PrL'};
+        elseif   spikeSites(CellID)>220
+            PutitativeStructure( CellID)={'Cg1'};
         end
         %         end
         animal_data.PutitativeStructure=PutitativeStructure;
@@ -195,7 +195,7 @@ for nume_files=1:numel(path)
         if length(SpikeSecund)>100
             spikes_trials=zeros(length(center),length(edges_CCA));
             spikes_trials_random=zeros(length( center),length(edges_CCA));
-           % spikes_trials_one_ms=zeros(length( center),length(edges_CCA_ONE_MS));
+            % spikes_trials_one_ms=zeros(length( center),length(edges_CCA_ONE_MS));
             spikes_trials_assembly=zeros(length(center),length(edges_trial));
             spikes_trials_assembly_random=zeros(length(center),length(edges_trial));
             spikes_trials_assembly_Gauss=zeros(length(center),length(edges_trial));
@@ -216,7 +216,7 @@ for nume_files=1:numel(path)
                     spikes_gauss(trial_ripple_ON,:)=(histc(spike(trial_ripple_ON,:).time,edges)');
 
                     spikes_trials(trial,:)=(histc(spike(trial_ripple_ON,:).time,edges_CCA)');
-                   % spikes_trials_one_ms(trial,:)=(histc(spike(trial_ripple_ON,:).time,edges_CCA_ONE_MS)');
+                    % spikes_trials_one_ms(trial,:)=(histc(spike(trial_ripple_ON,:).time,edges_CCA_ONE_MS)');
 
                     spikes_trials_assembly(trial,:)=(histc(spike(trial_ripple_ON,:).time,edges_trial)');
                     s=conv(spikes_trials_assembly(trial,:),kernel_trial);
@@ -227,12 +227,12 @@ for nume_files=1:numel(path)
                 end
 
                 if ~isempty(SpikeSecund (find(time_on_rand(trial) <= SpikeSecund   & SpikeSecund   <= time_off_rand(trial))))
-                     spikes_trials_random(trial,:)=(histc((SpikeSecund(find(time_on_rand(trial) <= SpikeSecund & SpikeSecund <=time_off_rand(trial))))-(center_rand(trial)),edges_CCA))';
+                    spikes_trials_random(trial,:)=(histc((SpikeSecund(find(time_on_rand(trial) <= SpikeSecund & SpikeSecund <=time_off_rand(trial))))-(center_rand(trial)),edges_CCA))';
                     spikes_trials_assembly_random(trial,:)=(histc((SpikeSecund(find(time_on_rand(trial) <= SpikeSecund & SpikeSecund <=time_off_rand(trial))))-(center_rand(trial)),edges_trial))';
                     s_rand=conv(spikes_trials_assembly_random(trial,:),kernel_trial);
                     center_gauss= ceil(length(edges_trial)/2);
                     spikes_trials_assembly_Gauss_rand(trial,:)=s_rand(ceil(length(s_rand)/2)-(center_gauss-1):ceil(length(s_rand)/2)+(center_gauss-1));
-          
+
                 end
 
 
@@ -251,7 +251,7 @@ for nume_files=1:numel(path)
             Cells(CellID_counter).Ripple_ID=  temp_rippleID;
             Cells(CellID_counter).individual_trials=spikes_trials;
             Cells(CellID_counter).individual_trials_random= spikes_trials_random;
-       %     Cells(CellID_counter).individual_trials_one_ms= spikes_trials_one_ms;
+            %     Cells(CellID_counter).individual_trials_one_ms= spikes_trials_one_ms;
             Cells(CellID_counter).individual_trials_count_assembly=  spikes_trials_assembly;
             Cells(CellID_counter).individual_trials_gauss_assembly=  spikes_trials_assembly_Gauss;
             Cells(CellID_counter).individual_trials_count_assembly_rand=    spikes_trials_assembly_random;
@@ -277,7 +277,7 @@ for nume_files=1:numel(path)
 
             CellID_counter=CellID_counter+1;
         end
-          clear spikes_gauss spike ic trial temp  temp_rippleID spikes_trials temp_conv_bzHigh_dHP temp_conv_bzHigh_iHP  temp_conv_bzLow_dHP temp_conv_bzLow_iHP  spikes_trials_one_ms
+        clear spikes_gauss spike ic trial temp  temp_rippleID spikes_trials temp_conv_bzHigh_dHP temp_conv_bzHigh_iHP  temp_conv_bzLow_dHP temp_conv_bzLow_iHP  spikes_trials_one_ms
         fprintf_r('reset')
 
     end
@@ -691,14 +691,14 @@ for structures_NUM=1:length(structures_unique)
         cellId_text=cellId_text(:,sorthely);
 
         temp_orig_ID=eval(['[(Assembly_cellID(nume_files).' char(structures_unique(structures_NUM)) ')]']);
-       
-        
 
-try
-        cellId_text(size(cellId_text,1)+1,:)= eval(['temp_orig_ID(ismember([(Assembly_cellID(nume_files).'  char(structures_unique(structures_NUM)) ')],Identified_neruons(:,nume_files)))']);
-catch
-    % cellId_text(size(cellId_text,1)+1,:)=temp_orig_ID;
-end
+
+
+        try
+            cellId_text(size(cellId_text,1)+1,:)= eval(['temp_orig_ID(ismember([(Assembly_cellID(nume_files).'  char(structures_unique(structures_NUM)) ')],Identified_neruons(:,nume_files)))']);
+        catch
+            % cellId_text(size(cellId_text,1)+1,:)=temp_orig_ID;
+        end
 
 
         for assembly_num=1:eval(['size(AssemblyTemplates(nume_files).'  char(structures_unique(structures_NUM)) ',2)'])
@@ -765,13 +765,13 @@ for structures_NUM=1:length(structures_unique)
     intersect_neurons_assembly_percent(isnan(intersect_neurons_assembly_percent))=0;
 
     %Egy sorba helyezi a hasonlo halozatokat
-%     for i=1:size(intersect_neurons_assembly_percent,3)
-%         for session_n=1:size(intersect_neurons_assembly_percent,1)
-%             sorted_intresct_assemblies_similarity(session_n,:,i)=sort(intersect_neurons_assembly_percent(session_n,:,i),'descend')
-%         end
-% 
-%     end
-     sorted_intresct_assemblies_similarity=intersect_neurons_assembly_percent;
+    %     for i=1:size(intersect_neurons_assembly_percent,3)
+    %         for session_n=1:size(intersect_neurons_assembly_percent,1)
+    %             sorted_intresct_assemblies_similarity(session_n,:,i)=sort(intersect_neurons_assembly_percent(session_n,:,i),'descend')
+    %         end
+    %
+    %     end
+    sorted_intresct_assemblies_similarity=intersect_neurons_assembly_percent;
 
     s_valtozo=([2:2:(size(sorted_intresct_assemblies_similarity,1)*2)])
     %cmap = colormap(lines);
@@ -798,17 +798,17 @@ for structures_NUM=1:length(structures_unique)
             hold on;
             stem(find(significant==0),eval(['[AssemblyTemplates(nume_files).' char(structures_unique(structures_NUM)) '(~significant,max_sim_assembly_ID(nume_files))]']).*flip_szorzo,'b-','filled')
             subtitle(num2str(max_sim_assembly_ID(nume_files)))
-%             fig_ax=gca;
-%               fig_ax.PlotBoxAspectRatio=([4,2,3]) ;
-%           
-%             view(90,-90)
+            %             fig_ax=gca;
+            %               fig_ax.PlotBoxAspectRatio=([4,2,3]) ;
+            %
+            %             view(90,-90)
         end
         fig=gcf
         fig.PaperUnits = 'points';
         fig.PaperPosition = [0 0 1400 600];
         fig.PaperSize = [1400 600];
         saveas(fig,['TBY37_Assembly_Tracking_'  char(structures_unique(structures_NUM)) '_assembly_' num2str(assembly_num)],'svg')
-       saveas(fig,['TBY37_Assembly_Tracking_'  char(structures_unique(structures_NUM)) '_assembly_' num2str(assembly_num)],'tif')
+        saveas(fig,['TBY37_Assembly_Tracking_'  char(structures_unique(structures_NUM)) '_assembly_' num2str(assembly_num)],'tif')
 
     end
 end

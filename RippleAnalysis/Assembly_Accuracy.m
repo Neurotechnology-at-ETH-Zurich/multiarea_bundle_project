@@ -14,12 +14,12 @@ predictorNames ={'duration', 'amplitude', 'lowpass min', 'lowpass mean Channel s
 for nume_files=1:numel(path)
     Path_temp=char(path(nume_files).folders);
 
-   if ~isempty(strfind(Path_temp,'rTBY'))
-       last_slesh=(strfind(Path_temp,'\'));
-       saving_filename=Path_temp((strfind(Path_temp,'rTBY')):last_slesh(end)-1);
-   else
+    if ~isempty(strfind(Path_temp,'rTBY'))
+        last_slesh=(strfind(Path_temp,'\'));
+        saving_filename=Path_temp((strfind(Path_temp,'rTBY')):last_slesh(end)-1);
+    else
         saving_filename='unknown';
-   end
+    end
 
     disp(['Working on Session ID: ' num2str(path(nume_files).sessionID)])
 
@@ -57,10 +57,17 @@ for nume_files=1:numel(path)
         %     mean(Assembly_activity(nume_files).IL,2)
         if flag_plot==1
             fig_combination= figure;
-            elotte=histogram(temp_binary_before(temp_binary_before>0),0.5:1:max(temp_binary)+0.5);
+            elotte= histcounts(temp_binary_before(temp_binary_before>0),0.5:1:max(temp_binary)+0.5);
             hold on;
-            alatta=histogram(temp_binary(temp_binary>0),0.5:1:max(temp_binary)+0.5);
+            alatta= histcounts(temp_binary(temp_binary>0),0.5:1:max(temp_binary)+0.5);
             hold on;
+            try
+                bar(1:length([elotte; alatta])/2, [elotte; alatta]');
+            catch
+                bar([elotte; alatta]');
+            end
+            title('Mixed size result');
+
         end
 
         trash=10;
@@ -90,8 +97,8 @@ for nume_files=1:numel(path)
             end
             xticklabels({dec2bin(unique(sort(binary_num_peri)),minDigits)} )
             xtickangle(90)
-            ylabel('Probability of significant Assembly Activition')
-            xlabel('Pattern of Assembly activation before/during SWRs')
+            ylabel('Count of significant assembly activities')
+            xlabel('Combination of selectively activited assemblies patterns before/during SWRs')
             title(char(structures_unique{structures_NUM}))
 
             fig=gcf;
@@ -120,7 +127,7 @@ for nume_files=1:numel(path)
             end
 
             Ripples_selected_for_assembly_random=Ripples(nume_files).featureTable(eventSubset_rand,predictorNames);
-           
+
             Total_Ripple_selected_assembly=vertcat(Ripples_selected_for_assembly,Ripples_selected_for_assembly_random);
 
             Total_Ripple_selected_assembly_random=vertcat(Ripples(nume_files).featureTable(entry2,predictorNames),Ripples_selected_for_assembly_random);
@@ -147,14 +154,14 @@ for nume_files=1:numel(path)
                 [trainedClassifier, validationAccuracy] = trainClassifier_PG(Total_Ripple_selected_assembly);
                 validationAccuracy_fold(i,fold)=validationAccuracy;
             end
-               disp('Training....random')
-            
+            disp('Training....random')
+
             for fold=1:20
                 [trainedClassifierR, validationAccuracyR] = trainClassifier_PG(Total_Ripple_selected_assembly);
                 validationAccuracy_fold_rand(i,fold)=validationAccuracyR;
             end
 
-          
+
 
             %             predicted_class = trainedClassifier.predictFcn(dataTest);
             %             %predicted_class = predict(classificationNaiveBayes,dataTest );
@@ -277,7 +284,7 @@ for nume_files=1:numel(path)
                 pie(name_by_structure);
                 %  subtitle('Percentage of Ripples')
 
-               if i==length(binary_num_peri)
+                if i==length(binary_num_peri)
                     subplot(2,3,5)
                     gru=[];fold=[];
                     [gru,fold]=size(validationAccuracy_fold);
@@ -291,44 +298,44 @@ for nume_files=1:numel(path)
                     %                 boxchart(validationAccuracy_fold')
                     boxchart(Group_Label,data_boxplot)
                     title ('Accuracy');
-               end
+                end
 
-%                     subplot(2,3,5)
-%                     gru=[];fold=[];
-%                     [gru,fold]=size(validationAccuracy_fold(i,:));
-%                     Group_Label=[];
-%                     for darab_gru=1:gru
-%                         Group_Label=[Group_Label  repmat({text_for_binary(darab_gru,:)},1,fold)];
-%                     end
-%                     gru=[];fold=[];
-%                     [gru,fold]=size(validationAccuracy_fold_rand(i,:));
-%                     Group_Label_rand=[];
-%                     for darab_gru=1:gru
-%                         Group_Label_rand=[Group_Label_rand  repmat({['shuffled -' text_for_binary(darab_gru,:)]},1,fold)];
-%                     end
-% 
-%                     Group_Label_rand=categorical(Group_Label_rand);
-%                     data_boxplot=[];
-%                     data_boxplot=reshape(validationAccuracy_fold(i,:)',[],1);
-%                     data_boxplot_rand=[];
-%                     data_boxplot_rand=reshape(validationAccuracy_fold_rand(i,:)',[],1);
-%                     %                 boxchart(validationAccuracy_fold')
-%                     boxchart([Group_Label Group_Label_rand]' ,[data_boxplot; data_boxplot_rand])
-%                     title (['Accuracy' ]);
-% 
-%                     [h,p,ci,stats] = ttest(validationAccuracy_fold(i,:), validationAccuracy_fold_rand(i,:));
-%                        title (['Accuracy p-value = ' num2str(round(p,3))]);
-%                        ylim([0 1])
-                    validationAccuracy_fold_Total.valid(structures_NUM, nume_files)={validationAccuracy_fold(i,:)};
-                    validationAccuracy_fold_Total.random(structures_NUM, nume_files)={validationAccuracy_fold_rand(i,:)};
-%                     validationAccuracy_fold_Total.ttest_p(structures_NUM, nume_files)=p;
-%                     validationAccuracy_fold_Total.ttest_h(structures_NUM, nume_files)=h;
-%                     validationAccuracy_fold_Total.ttest_ci(structures_NUM, nume_files)={ci};
-%                     validationAccuracy_fold_Total.ttest_stats(structures_NUM, nume_files)={stats};
-                      
-                    %         catch
-                    %             disp('no data for the Accuracy')
-              % end
+                %                     subplot(2,3,5)
+                %                     gru=[];fold=[];
+                %                     [gru,fold]=size(validationAccuracy_fold(i,:));
+                %                     Group_Label=[];
+                %                     for darab_gru=1:gru
+                %                         Group_Label=[Group_Label  repmat({text_for_binary(darab_gru,:)},1,fold)];
+                %                     end
+                %                     gru=[];fold=[];
+                %                     [gru,fold]=size(validationAccuracy_fold_rand(i,:));
+                %                     Group_Label_rand=[];
+                %                     for darab_gru=1:gru
+                %                         Group_Label_rand=[Group_Label_rand  repmat({['shuffled -' text_for_binary(darab_gru,:)]},1,fold)];
+                %                     end
+                %
+                %                     Group_Label_rand=categorical(Group_Label_rand);
+                %                     data_boxplot=[];
+                %                     data_boxplot=reshape(validationAccuracy_fold(i,:)',[],1);
+                %                     data_boxplot_rand=[];
+                %                     data_boxplot_rand=reshape(validationAccuracy_fold_rand(i,:)',[],1);
+                %                     %                 boxchart(validationAccuracy_fold')
+                %                     boxchart([Group_Label Group_Label_rand]' ,[data_boxplot; data_boxplot_rand])
+                %                     title (['Accuracy' ]);
+                %
+                %                     [h,p,ci,stats] = ttest(validationAccuracy_fold(i,:), validationAccuracy_fold_rand(i,:));
+                %                        title (['Accuracy p-value = ' num2str(round(p,3))]);
+                %                        ylim([0 1])
+                validationAccuracy_fold_Total.valid(structures_NUM, nume_files)={validationAccuracy_fold(i,:)};
+                validationAccuracy_fold_Total.random(structures_NUM, nume_files)={validationAccuracy_fold_rand(i,:)};
+                %                     validationAccuracy_fold_Total.ttest_p(structures_NUM, nume_files)=p;
+                %                     validationAccuracy_fold_Total.ttest_h(structures_NUM, nume_files)=h;
+                %                     validationAccuracy_fold_Total.ttest_ci(structures_NUM, nume_files)={ci};
+                %                     validationAccuracy_fold_Total.ttest_stats(structures_NUM, nume_files)={stats};
+
+                %         catch
+                %             disp('no data for the Accuracy')
+                % end
 
                 fig=gcf;
                 fig.PaperUnits = 'points';

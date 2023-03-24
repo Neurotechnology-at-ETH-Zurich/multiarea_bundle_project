@@ -20,7 +20,7 @@ for structures_NUM=1:length(structures_unique)
         [~,sorthely]=sort(cellId_text(nume_files,:))
         cellId_text=cellId_text(:,sorthely);
         temp_orig_ID=eval(['[(Assembly_cellID(nume_files).' char(structures_unique(structures_NUM)) ')]']);
- 
+
         cellId_text(size(cellId_text,1)+1,:)= eval(['temp_orig_ID(ismember([(Assembly_cellID(nume_files).'  char(structures_unique(structures_NUM)) ')],Identified_neruons(:,nume_files)))']);
 
         for assembly_num=1:eval(['size(AssemblyTemplates(nume_files).'  char(structures_unique(structures_NUM)) ',2)'])
@@ -83,7 +83,7 @@ end
 %
 close all
 %
-%
+
 
 for structures_NUM=1:length(structures_unique)
 
@@ -126,40 +126,50 @@ for structures_NUM=1:length(structures_unique)
 
             %% significant stem plot if there is onlz one assembly/session.
             if size(sorted_intresct_assemblies_similarity,3)>1
+
                 significant=eval(['[Significant_Neurons_Assemblies(nume_files).' char(structures_unique(structures_NUM)) '_significant{max_sim_assembly_ID(nume_files),1}(:,:)]'])
+                [~, assembly_order]=sort(eval(['[AssemblyTemplates(nume_files).' char(structures_unique(structures_NUM)) '(:,max_sim_assembly_ID(nume_files))]']))
+
                 if eval(['sum(AssemblyTemplates(nume_files).' char(structures_unique(structures_NUM))  '(significant,max_sim_assembly_ID(nume_files))<0)>1'])
                     flip_szorzo=-1;
                 else
                     flip_szorzo=1;
                 end
-                stem(find(significant),eval(['[AssemblyTemplates(nume_files).' char(structures_unique(structures_NUM)) '(significant,max_sim_assembly_ID(nume_files))]']).*flip_szorzo,'r-','filled');
-                set(subplot_activity,'XTick',find(significant),'XTickLabel',eval(['[Significant_Neurons_Assemblies(nume_files).' char(structures_unique(structures_NUM)) '{max_sim_assembly_ID(nume_files)}(:,:)]']),'FontSize',16');
+                stem(find(significant(assembly_order)),sort(eval(['[AssemblyTemplates(nume_files).' char(structures_unique(structures_NUM)) '(significant,max_sim_assembly_ID(nume_files))]'])).*flip_szorzo,'r-','filled');
+                set(subplot_activity,'XTick',find(significant(assembly_order)),'XTickLabel',eval(['[Significant_Neurons_Assemblies(nume_files).' char(structures_unique(structures_NUM)) '{max_sim_assembly_ID(nume_files)}(:,:)]']),'FontSize',16');
 
                 %               Significant_Neurons_Assemblies(nume_files).dHP_significant{max_sim_assembly_ID(nume_files),1}(:,:)
                 %                 [Significant_Neurons_Assemblies(nume_files).dHP{max_sim_assembly_ID(nume_files)}(:,:)]
             else size(sorted_intresct_assemblies_similarity,3)<1 %It did not use the maximum tracakble assebmly member/session
                 significant=eval(['[Significant_Neurons_Assemblies(nume_files).' char(structures_unique(structures_NUM)) '_significant{size(sorted_intresct_assemblies_similarity,3),1}(:,:)]'])
+                [~, assembly_order]=sort(eval(['[AssemblyTemplates(nume_files).' char(structures_unique(structures_NUM)) '(:,size(sorted_intresct_assemblies_similarity,3))]']))
+               
                 if eval(['sum(AssemblyTemplates(nume_files).' char(structures_unique(structures_NUM))  '(significant,size(sorted_intresct_assemblies_similarity,3))<0)>1'])
                     flip_szorzo=-1;
                 else
                     flip_szorzo=1;
                 end
-                stem(find(significant),eval(['[AssemblyTemplates(nume_files).' char(structures_unique(structures_NUM)) '(significant,size(sorted_intresct_assemblies_similarity,3))]']).*flip_szorzo,'r-','filled');
-                set(subplot_activity,'XTick',find(significant),'XTickLabel',eval(['[Significant_Neurons_Assemblies(nume_files).' char(structures_unique(structures_NUM)) '{size(sorted_intresct_assemblies_similarity,3)}(:,:)]']),'FontSize',16');
+                stem(find(significant(assembly_order)),sort(eval(['[AssemblyTemplates(nume_files).' char(structures_unique(structures_NUM)) '(significant,size(sorted_intresct_assemblies_similarity,3))]'])).*flip_szorzo,'r-','filled');
+                set(subplot_activity,'XTick',find(significant(assembly_order)),'XTickLabel',eval(['[Significant_Neurons_Assemblies(nume_files).' char(structures_unique(structures_NUM)) '{size(sorted_intresct_assemblies_similarity,3)}(:,:)]']),'FontSize',16');
             end
 
             %% non significant plot
             hold on;
+            
             if  size(sorted_intresct_assemblies_similarity,3)>1
-                stem(find(significant==0),eval(['[AssemblyTemplates(nume_files).' char(structures_unique(structures_NUM)) '(~significant,max_sim_assembly_ID(nume_files))]']).*flip_szorzo,'b-','filled')
+                [~, assembly_order]=sort(eval(['[AssemblyTemplates(nume_files).' char(structures_unique(structures_NUM)) '(:,max_sim_assembly_ID(nume_files))]']))
+
+                stem(find(significant(assembly_order)==0),(eval(['[AssemblyTemplates(nume_files).' char(structures_unique(structures_NUM)) '(~significant,max_sim_assembly_ID(nume_files))]'])).*flip_szorzo,'b-','filled')
                 subtitle(['Assembly ID: ' num2str(max_sim_assembly_ID(nume_files))])
             else  size(sorted_intresct_assemblies_similarity,3)<1
-
-                stem(find(significant==0),eval(['[AssemblyTemplates(nume_files).' char(structures_unique(structures_NUM)) '(~significant,size(sorted_intresct_assemblies_similarity,3))]']).*flip_szorzo,'b-','filled')
+                [~, assembly_order]=sort(eval(['[AssemblyTemplates(nume_files).' char(structures_unique(structures_NUM)) '(:,size(sorted_intresct_assemblies_similarity,3))]']))
+               
+                stem(find(significant(assembly_order)==0),(eval(['[AssemblyTemplates(nume_files).' char(structures_unique(structures_NUM)) '(~significant,size(sorted_intresct_assemblies_similarity,3))]'])).*flip_szorzo,'b-','filled')
                 subtitle(['Assembly ID: ' num2str(size(sorted_intresct_assemblies_similarity,3))])
             end
 
-            xlim([0 length(significant)+2])
+            xlim([0 length(significant)+1])
+            ylim([-1 +1])
 
             fig_ax=gca;
             fig_ax.PlotBoxAspectRatio=([3,2,3]) ;
