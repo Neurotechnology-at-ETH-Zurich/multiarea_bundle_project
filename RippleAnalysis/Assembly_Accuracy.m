@@ -52,9 +52,6 @@ for nume_files=1:numel(path)
         eval(['Assembly_max_during_Ripple_ID(nume_files).' char(structures_unique{structures_NUM}) '= eventSubset_max;']);
         eval(['Assembly_max_random_ID(nume_files).' char(structures_unique{structures_NUM}) '=  eventSubset_max_before;']);
 
-        %
-        %     %
-        %     mean(Assembly_activity(nume_files).IL,2)
         if flag_plot==1
             fig_combination= figure;
             elotte= histcounts(temp_binary_before(temp_binary_before>0),0.5:1:max(temp_binary)+0.5);
@@ -66,8 +63,6 @@ for nume_files=1:numel(path)
             catch
                 bar([elotte; alatta]');
             end
-            title('Mixed size result');
-
         end
 
         trash=10;
@@ -97,15 +92,17 @@ for nume_files=1:numel(path)
             end
             xticklabels({dec2bin(unique(sort(binary_num_peri)),minDigits)} )
             xtickangle(90)
-            ylabel('Count of significant assembly activities')
-            xlabel('Combination of selectively activited assemblies patterns before/during SWRs')
-            title(char(structures_unique{structures_NUM}))
-
+            ylabel('Number of ripples','FontSize',16)
+            xlabel('Combination of selectively activited assemblies patterns before/during SWRs','FontSize',16)
+            title(char(structures_unique{structures_NUM}),'FontSize',18)
+            set(gca,'FontSize',16)
+            axis square
             fig=gcf;
+
             fig.PaperUnits = 'points';
             fig.Renderer='painters'
-            fig.PaperPosition = [0 0 1200 800];
-            fig.PaperSize = [1200 800];
+            fig.PaperPosition = [0 0 800 800];
+            fig.PaperSize = [800 800];
             saveas(fig,[char(saving_filename) '_' num2str(path(nume_files).sessionID) '_Assembly_Probabilty_' char(structures_unique{structures_NUM})],'svg')
             saveas(fig,[ char(saving_filename) '_' num2str(path(nume_files).sessionID) '_Assembly_Probabilty_' char(structures_unique{structures_NUM})],'tif')
         end
@@ -117,7 +114,13 @@ for nume_files=1:numel(path)
             ripple_selected=find(ismember((Ripples(nume_files).ripples.eventID),{'bzHigh_dHP','bzLow_dHP','bzHigh_iHP','bzLow_iHP'}));
             eventSubset=intersect(ripple_selected,(find(temp_binary==binary_num_peri(i))));
             eventSubset_rand_temp=intersect(ripple_selected,(find(temp_binary~=binary_num_peri(i))));
+
+
             Ripples_selected_for_assembly=Ripples(nume_files).featureTable(eventSubset,predictorNames);
+
+            %  Total_Ripple_selected_assembly=Ripples(nume_files).featureTable(:,predictorNames);
+            % Total_Ripple_selected_assembly.class=temp_binary';
+
             entry = eventSubset_rand_temp(randperm(length(eventSubset_rand_temp)));
             entry2 = eventSubset_rand_temp(randperm(length(eventSubset_rand_temp)));
             try
@@ -156,10 +159,10 @@ for nume_files=1:numel(path)
             end
             disp('Training....random')
 
-            for fold=1:20
-                [trainedClassifierR, validationAccuracyR] = trainClassifier_PG(Total_Ripple_selected_assembly);
-                validationAccuracy_fold_rand(i,fold)=validationAccuracyR;
-            end
+            % for fold=1:20
+            %     [trainedClassifierR, validationAccuracyR] = trainClassifier_PG(Total_Ripple_selected_assembly);
+            %     validationAccuracy_fold_rand(i,fold)=validationAccuracyR;
+            % end
 
 
 
@@ -183,12 +186,33 @@ for nume_files=1:numel(path)
             if flag_plot==1
                 figure(i)
                 subp_ax1=subplot(2,3,1);
+
+                try
+                    bar(1:length([elotte; alatta])/2, [elotte; alatta]');
+                catch
+                    bar([elotte; alatta]');
+                end
+
+
+                try
+                    xticks(unique(sort(binary_num_peri)))
+                catch
+                    disp('error')
+                end
+                xticklabels({dec2bin(unique(sort(binary_num_peri)),minDigits)} )
+                xtickangle(90)
+                ylabel('Number of ripples','FontSize',16)
+                xlabel('Combination of selectively activited assemblies patterns before/during SWRs','FontSize',16)
+                title(char(structures_unique{structures_NUM}),'FontSize',18)
+                set(gca,'FontSize',16)
+                axis square
+
                 for num_as=1:eval(['size(Assembly_activity(nume_files).' char(structures_unique{structures_NUM}) ',3)'])
                     %hold on; plot(edges_for_assembly,mean(assembly_activity_IL(:,eventSubset_IL,num_as),2),'-','LineWidth',2)
-                    options.color_area = color_lines(num_as,:);% [243 169 114]./255;    % Orange theme
-                    options.color_line = color_lines(num_as,:);%[236 112  22]./255;
+                    % options.color_area = color_lines(num_as,:);% [243 169 114]./255;    % Orange theme
+                    % options.color_line = color_lines(num_as,:);%[236 112  22]./255;
                     temp_aerobar_random=eval(['Assembly_activity(nume_files).' char(structures_unique{structures_NUM}) '(1:length(edges_for_assembly),eventSubset,num_as);']);
-                    plot_areaerrorbar(temp_aerobar_random',options);
+                    % plot_areaerrorbar(temp_aerobar_random',options);
 
                     temp_aerobar_random_save(:,:,num_as)= temp_aerobar_random;
                     temp_aerobar_random=[];
@@ -196,12 +220,12 @@ for nume_files=1:numel(path)
                     axis square
                 end
 
-                xlim([find(round(edges_for_assembly.*1000)==-500) find(round(edges_for_assembly.*1000)==500)])
-
-                xticks([find(round(edges_for_assembly.*1000)==-500), find(round(edges_for_assembly.*1000)==-250), round(length(edges_for_assembly)/2),find(round(edges_for_assembly.*1000)==250), find(round(edges_for_assembly.*1000)==500)]);
-                xticklabels([-500 -250,0,250,500])
-                xlabel('Time [ms]')
-                ylabel('Avaraged Assembly expression strength')
+                % xlim([find(round(edges_for_assembly.*1000)==-500) find(round(edges_for_assembly.*1000)==500)])
+                %
+                % xticks([find(round(edges_for_assembly.*1000)==-500), find(round(edges_for_assembly.*1000)==-250), round(length(edges_for_assembly)/2),find(round(edges_for_assembly.*1000)==250), find(round(edges_for_assembly.*1000)==500)]);
+                % xticklabels([-500 -250,0,250,500])
+                % xlabel('Time [ms]')
+                % ylabel('Avaraged Assembly expression strength')
 
                 subp_ax2=subplot(2,3,2);
                 for num_as=1:eval(['size(Assembly_activity(nume_files).' char(structures_unique{structures_NUM}) ',3)'])
@@ -219,11 +243,11 @@ for nume_files=1:numel(path)
                     temp_aerobar=[];
 
                     % ylim([subp.YLim(1) subp.YLim(2)]);
-                    %    ylim([-1 2])
+                    ylim([-0.5 11])
                     axis square;
                 end
                 clear   temp_aerobar_random_save
-                linkaxes([subp_ax2, subp_ax1],'y');
+                %linkaxes([subp_ax2, subp_ax1],'y');
 
                 xlim([find(round(edges_for_assembly.*1000)==-500) find(round(edges_for_assembly.*1000)==500)])
                 xticks([find(round(edges_for_assembly.*1000)==-500), find(round(edges_for_assembly.*1000)==-250), round(length(edges_for_assembly)/2),find(round(edges_for_assembly.*1000)==250), find(round(edges_for_assembly.*1000)==500)]);
@@ -233,17 +257,61 @@ for nume_files=1:numel(path)
                 %
                 subplot(2,3,3)
 
-
-
                 %subplot(1,2,1)
                 %mean(eventSubset_max)
 
                 % figure;
 
+                DATA_for_Violion=[];
+                VariableNames={};
+                groupcol={};
+                groupcol_struc={}
+                for structures_NUM_temp=1:length(structures_unique)
+                    eventSubset_max_test=[];
+                    for assembly_num_total=1:eval(['(size(Assembly_activity(nume_files). ' char(structures_unique{structures_NUM_temp}) ',3))'])
+                        eventSubset_max_test(assembly_num_total,:)=eval(['(mean(abs(Assembly_activity(nume_files).' char(structures_unique{structures_NUM_temp}) '((start_dtop_rip(1):start_dtop_rip(2))+(len/2),:,assembly_num_total))));']);
+                        VariableNames=[VariableNames,[structures_unique{structures_NUM_temp} ' Assembly ' num2str( assembly_num_total)]];
+                        DATA_for_Violion=[DATA_for_Violion, (eventSubset_max_test(assembly_num_total,temp_binary==binary_num_peri(i)))'];
+                        groupcol =  [groupcol, repmat({[structures_unique{structures_NUM_temp} ' Assembly ' num2str( assembly_num_total)]},1,length((eventSubset_max_test(assembly_num_total,temp_binary==binary_num_peri(i)))'))];
+                        groupcol_struc=[groupcol_struc,{structures_unique{structures_NUM_temp}}];
+                    end
+
+                end
 
 
-                violinplot((eventSubset_max(:,(temp_binary==binary_num_peri(i))))');
-                title(['Assmebies pattern: ' (text_for_binary(i,:)) ' in ' char(structures_unique{structures_NUM})])
+                a2t = array2table(DATA_for_Violion,"VariableNames",  VariableNames);
+                groupcol_cat=categorical(groupcol);
+
+                [~,~,category_for_color]=unique(groupcol_struc);
+
+                color_violin=colormap('lines');
+                color_violin=color_violin(category_for_color,:);
+
+                vectorised_grouped_data=reshape(DATA_for_Violion,1,[])';
+
+                b=boxchart(groupcol_cat,vectorised_grouped_data,'GroupByColor', groupcol_cat','BoxWidth',10,'MarkerStyle','none')
+                [p,~,stats] = anova1(vectorised_grouped_data,groupcol_cat,'off');
+               % [c,~,~,gnames] = multcompare(stats,"CriticalValueType","bonferroni");
+
+               STAT(i,:)={stats};
+
+
+
+                
+
+      
+
+                for colors=1:numel(b)
+                    b(colors).BoxFaceColor=color_violin(colors,:)
+                    b(colors).BoxEdgeColor=color_violin(colors,:)
+                    b(colors).MarkerColor=color_violin(colors,:)
+                end
+                ylim([0 7])
+                axis square
+
+                %   violinplot(a2t);
+                %   violinplot((eventSubset_max(:,(temp_binary==binary_num_peri(i))))');
+                title(['Assmebies pattern: ' (text_for_binary(i,:)) ' in ' char(structures_unique{structures_NUM}) 'ANOVA p-value: ' num2str(round(p,4))])
                 ylabel('max abs Assembly expression strength')
                 xlabel('Assembly ID')
                 % Value of the assembly strength ripple
@@ -277,12 +345,49 @@ for nume_files=1:numel(path)
 
                 subplot(2,3,6)
 
-                name_by_structure=Ripples(nume_files).ripples.eventID(eventSubset);
-                name_by_structure(ismember(name_by_structure,{'bzLow_iHP','bzHigh_iHP'}))='iHP';
-                name_by_structure(ismember(name_by_structure,{'bzLow_dHP','bzHigh_dHP'}))='dHP';
+
+                %%correlation
+                % principle_corr_column=structures_NUM+num_as-i;
+                % DATA_for_Violion_corr=(DATA_for_Violion(:,~ismember(1:size(DATA_for_Violion,2),principle_corr_column)));
+                % VariableNames(~ismember(1:size(DATA_for_Violion,2),principle_corr_column))
+                % 
+                % for num_assembly_total=1:size(DATA_for_Violion,2)-1
+                %     principle_corr_vector=(DATA_for_Violion(:,ismember(1:size(DATA_for_Violion,2),principle_corr_column)));
+                % 
+                %     [R,P] = corrcoef(principle_corr_vector,DATA_for_Violion_corr(:, num_assembly_total));
+                %     R_value(num_assembly_total,:)=R(2)
+                %     if abs(R(2))>0.8
+                %         hold on;  scatter(principle_corr_vector,DATA_for_Violion_corr(:, num_assembly_total),'.r')
+                %         b1 = principle_corr_vector\DATA_for_Violion_corr(:, num_assembly_total)
+                %         yCalc1 = b1*principle_corr_vector;
+                %         hold on;   plot(principle_corr_vector, yCalc1,'Color','r');
+                %         title(['R:' num2str(R(2))])
+                %     else
+                %         hold on;  scatter(principle_corr_vector,DATA_for_Violion_corr(:, num_assembly_total),'.k')
+                %         b1 = principle_corr_vector\DATA_for_Violion_corr(:, num_assembly_total)
+                %         yCalc1 = b1*principle_corr_vector;
+                %         hold on;   plot(principle_corr_vector, yCalc1,'Color','k');
+                %     end
+                % end
+                % axis square
+                % ylim([0 max(max(DATA_for_Violion_corr))])
+                % xlim([min(principle_corr_vector)-0.1 max(principle_corr_vector)+0.1])
+
+                name_by_structure=Ripples(nume_files).ripples.eventID(eventSubset);    
+
+% intersect(Ripples(nume_files).ripples.common_ripples(:,:),eventSubset)
+% Ripples(nume_files).ripples.eventID(Ripples(nume_files).ripples.common_ripples(:,1))
+
+ %               sum(ismember(Ripples(nume_files).ripples.common_ripples(:,2),eventSubset))+sum(ismember(Ripples(nume_files).ripples.common_ripples(:,1),eventSubset))
+                % name_by_structure(ismember(name_by_structure,{'bzLow_iHP','bzHigh_iHP'}))='iHP';
+                % name_by_structure(ismember(name_by_structure,{'bzLow_dHP','bzHigh_dHP'}))='dHP';
+                % 
+                % name_by_structure;
+                % name_by_structure;
+
 
                 pie(name_by_structure);
-                %  subtitle('Percentage of Ripples')
+                 subtitle('Percentage of Ripples')
 
                 if i==length(binary_num_peri)
                     subplot(2,3,5)
@@ -327,8 +432,8 @@ for nume_files=1:numel(path)
                 %                        title (['Accuracy p-value = ' num2str(round(p,3))]);
                 %                        ylim([0 1])
                 validationAccuracy_fold_Total.valid(structures_NUM, nume_files)={validationAccuracy_fold(i,:)};
-                validationAccuracy_fold_Total.random(structures_NUM, nume_files)={validationAccuracy_fold_rand(i,:)};
-                %                     validationAccuracy_fold_Total.ttest_p(structures_NUM, nume_files)=p;
+                % validationAccuracy_fold_Total.random(structures_NUM, nume_files)={validationAccuracy_fold_rand(i,:)};
+                % %                     validationAccuracy_fold_Total.ttest_p(structures_NUM, nume_files)=p;
                 %                     validationAccuracy_fold_Total.ttest_h(structures_NUM, nume_files)=h;
                 %                     validationAccuracy_fold_Total.ttest_ci(structures_NUM, nume_files)={ci};
                 %                     validationAccuracy_fold_Total.ttest_stats(structures_NUM, nume_files)={stats};
@@ -339,7 +444,7 @@ for nume_files=1:numel(path)
 
                 fig=gcf;
                 fig.PaperUnits = 'points';
-                fig.Renderer='painters'
+                fig.Renderer='painters';
                 fig.PaperPosition = [0 0 800 600];
                 fig.PaperSize = [800 600];
                 saveas(fig,[char(saving_filename) '_' num2str(path(nume_files).sessionID) '_'  char(structures_unique{structures_NUM}) '_Assembly_pattern_' num2str(dec2bin(binary_num_peri(i)))],'fig')
@@ -348,9 +453,10 @@ for nume_files=1:numel(path)
 
             end
 
-            clear Group_Label   Group_Label_rand eventSubset_rand_temp Ripples_selected_for_assembly entry eventSubset_rand Ripples_selected_for_assembly_random Total_Ripple_selected_assembly  Response
+            clear Group_Label  a2t  Group_Label_rand eventSubset_rand_temp Ripples_selected_for_assembly entry eventSubset_rand Ripples_selected_for_assembly_random Total_Ripple_selected_assembly  Response
 
         end
+         STAT_TOTAL(structures_NUM, nume_files)={STAT};
         close all
         clear    Response Response2 validationAccuracy_fold eventSubset_temp  eventSubset_temp_before_binary   eventSubset_max  eventSubset_max_before
     end
