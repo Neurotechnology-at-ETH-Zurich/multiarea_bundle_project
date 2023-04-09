@@ -685,14 +685,9 @@ for structures_NUM=1:length(structures_unique)
 
         cellId_text=eval(['(Identified_neruons(ismember(Identified_neruons(:,nume_files),[(Assembly_cellID(nume_files).' char(structures_unique(structures_NUM)) ')]),:))']);
         cellId_text= cellId_text';
-
         [~,sorthely]=sort(cellId_text(nume_files,:))
-
         cellId_text=cellId_text(:,sorthely);
-
         temp_orig_ID=eval(['[(Assembly_cellID(nume_files).' char(structures_unique(structures_NUM)) ')]']);
-
-
 
         try
             cellId_text(size(cellId_text,1)+1,:)= eval(['temp_orig_ID(ismember([(Assembly_cellID(nume_files).'  char(structures_unique(structures_NUM)) ')],Identified_neruons(:,nume_files)))']);
