@@ -124,7 +124,7 @@ for structures_NUM=1:length(structures_unique)
         for nume_files=1:size(sorted_intresct_assemblies_similarity,1)
             subplot_activity=subplot((size(sorted_intresct_assemblies_similarity,1)),2, s_valtozo(nume_files))
 
-            %% significant stem plot if there is onlz one assembly/session.
+            %% significant stem plot if there is only one assembly/session.
             if size(sorted_intresct_assemblies_similarity,3)>1
 
                 significant=eval(['[Significant_Neurons_Assemblies(nume_files).' char(structures_unique(structures_NUM)) '_significant{max_sim_assembly_ID(nume_files),1}(:,:)]'])
