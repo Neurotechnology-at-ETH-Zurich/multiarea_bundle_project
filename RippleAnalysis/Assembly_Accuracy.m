@@ -23,7 +23,7 @@ for nume_files=1:numel(path)
 
     disp(['Working on Session ID: ' num2str(path(nume_files).sessionID)])
 
-    for structures_NUM=1:length(structures_unique)
+    for structures_NUM=4%1:length(structures_unique)
         for assembly_num_total=1:eval(['(size(Assembly_activity(nume_files). ' char(structures_unique{structures_NUM}) ',3))'])
             %       trashold=eval(['2*mean(((std(abs(Assembly_activity(nume_files).' char(structures_unique{structures_NUM})  '(1:length(start_dtop_rip(1):start_dtop_rip(2)),:,assembly_num_total))))));']);
             trashold=eval(['2*mean(((std(abs(Assembly_activity(nume_files).' char(structures_unique{structures_NUM})  '((len/2):length((start_dtop_rip(1):start_dtop_rip(2)))+(len/2),:,assembly_num_total))))));']);
