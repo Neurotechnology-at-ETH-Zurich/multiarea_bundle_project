@@ -23,7 +23,7 @@ for nume_files=1:numel(path)
 
     disp(['Working on Session ID: ' num2str(path(nume_files).sessionID)])
 
-    for structures_NUM=4%1:length(structures_unique)
+    for structures_NUM=1:length(structures_unique)
         for assembly_num_total=1:eval(['(size(Assembly_activity(nume_files). ' char(structures_unique{structures_NUM}) ',3))'])
             %       trashold=eval(['2*mean(((std(abs(Assembly_activity(nume_files).' char(structures_unique{structures_NUM})  '(1:length(start_dtop_rip(1):start_dtop_rip(2)),:,assembly_num_total))))));']);
             trashold=eval(['2*mean(((std(abs(Assembly_activity(nume_files).' char(structures_unique{structures_NUM})  '((len/2):length((start_dtop_rip(1):start_dtop_rip(2)))+(len/2),:,assembly_num_total))))));']);
@@ -108,7 +108,7 @@ for nume_files=1:numel(path)
         end
 
         text_for_binary=dec2bin(binary_num_peri,minDigits);
-        for i= 1:length(binary_num_peri)
+        for i= 1%1:length(binary_num_peri)
             clear  Total_Ripple_selected_assembly   Total_Ripple_selected_assembly_random   Ripples_selected_for_assembly_random Ripples_selected_for_assembly
 
             ripple_selected=find(ismember((Ripples(nume_files).ripples.eventID),{'bzHigh_dHP','bzLow_dHP','bzHigh_iHP','bzLow_iHP'}));
