@@ -1,11 +1,11 @@
 
 close all
-for structures_NUM=1:length(structures_unique)
+for structures_NUM=1:4%length(structures_unique)
     figure(structures_NUM)
 
     %shift_subplot=[0 max((arrayfun(@(s)size(s.IL,1),Assembly_max_during_Ripple_ID))), max((arrayfun(@(s)size(s.IL,1),Assembly_max_during_Ripple_ID)))*2,max((arrayfun(@(s)size(s.IL,1),Assembly_max_during_Ripple_ID)))*3,max((arrayfun(@(s)size(s.IL,1),Assembly_max_during_Ripple_ID)))*4]
     shift_subplot=[0 eval(['max((arrayfun(@(s)size(s.' char(structures_unique(structures_NUM)) ',1),Assembly_max_during_Ripple_ID)))']), eval(['max((arrayfun(@(s)size(s.' char(structures_unique(structures_NUM)) ',1),Assembly_max_during_Ripple_ID)))*2']), eval(['max((arrayfun(@(s)size(s.' char(structures_unique(structures_NUM))  ',1),Assembly_max_during_Ripple_ID)))*3']),eval(['max((arrayfun(@(s)size(s.' char(structures_unique(structures_NUM)) ',1),Assembly_max_during_Ripple_ID)))*4'])];
-    for nume_files=1:numel(path)
+    for nume_files=1:numel(path)-1
 
         if ~isempty(strfind(Path_temp,'rTBY'))
             last_slesh=(strfind(Path_temp,'\'));

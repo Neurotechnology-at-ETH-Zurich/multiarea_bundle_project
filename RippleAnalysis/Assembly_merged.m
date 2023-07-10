@@ -28,7 +28,8 @@ CellID_counter=1;
 
 %you have to be in the folder where selected session are.
 base_folder=pwd;
-listing = dir('F:\Dropbox (Personal)\ETH_DATA\rTBY37');
+
+listing = dir(base_folder);
 
 % getting the folder with the data, eliminate noise from path
 for i=1:numel(listing)
