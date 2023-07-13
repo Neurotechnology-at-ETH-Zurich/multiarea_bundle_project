@@ -1,6 +1,6 @@
 
 close all
-for structures_NUM=1:4%length(structures_unique)
+for structures_NUM=1:length(structures_unique)
     figure(structures_NUM)
 
     %shift_subplot=[0 max((arrayfun(@(s)size(s.IL,1),Assembly_max_during_Ripple_ID))), max((arrayfun(@(s)size(s.IL,1),Assembly_max_during_Ripple_ID)))*2,max((arrayfun(@(s)size(s.IL,1),Assembly_max_during_Ripple_ID)))*3,max((arrayfun(@(s)size(s.IL,1),Assembly_max_during_Ripple_ID)))*4]
@@ -180,8 +180,8 @@ for structures_NUM=1:length(structures_unique)
         fig.PaperUnits = 'points';
         fig.PaperPosition = [0 0 1400 1000];
         fig.PaperSize = [1400 1000];
-        saveas(fig,['TBY37_Assembly_Tracking_'  char(structures_unique(structures_NUM)) '_assembly_' num2str(assembly_num)],'svg')
-        saveas(fig,['TBY37_Assembly_Tracking_'  char(structures_unique(structures_NUM)) '_assembly_' num2str(assembly_num)],'tif')
+        saveas(fig,[char( saving_filename) '_Assembly_Tracking_'  char(structures_unique(structures_NUM)) '_assembly_' num2str(assembly_num)],'svg')
+        saveas(fig,[char( saving_filename) '_Assembly_Tracking_'  char(structures_unique(structures_NUM)) '_assembly_' num2str(assembly_num)],'tif')
 
     end
 end
