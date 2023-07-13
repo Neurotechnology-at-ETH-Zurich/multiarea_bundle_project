@@ -24,7 +24,7 @@ for nume_files=2:numel(path)-1
         elseif isunix
             last_slesh=(strfind(Path_temp,'/'));
         elseif ispc
-            last_slesh=(strfind(Path_temp,'\'));
+            last_slesh=(strfind(Path_temp,'/'));
         else
             disp('Platform not supported')
         end
@@ -34,7 +34,7 @@ for nume_files=2:numel(path)-1
     end
 
 
-    for structures_NUM=2:length(structures_unique)
+    for structures_NUM=1:length(structures_unique)
             disp(['Working on Session ID: ' num2str(path(nume_files).sessionID) ' Sturcture name: ' char(structures_unique(structures_NUM))])
         P=[];
         if ~isempty(structures_unique(structures_NUM))
@@ -54,7 +54,6 @@ for nume_files=2:numel(path)-1
             
             %handles. ("axis" + num2str(x))
             if eval(['(size(Assembly_activity(nume_files).' char(structures_unique{structures_NUM}) ',3))'])>1
-
                 temp_binary=sum(repmat((pow2(size(eventSubset_temp,1)-1:-1:0))',[1,size(eventSubset_temp,2)]).*eventSubset_temp);
                 temp_binary_before=sum(repmat((pow2(size(eventSubset_temp_before_binary,1)-1:-1:0))',[1,size(eventSubset_temp_before_binary,2)]).*eventSubset_temp_before_binary);
             else
@@ -75,7 +74,7 @@ for nume_files=2:numel(path)-1
                 alatta= histcounts(temp_binary(temp_binary>0),0.5:1:max(temp_binary)+0.5);
                 hold on;
                 try
-                    bar(1:length([elotte; alatta])/2, [elotte; alatta]');
+                    bar(1:length([elotte; alatta])/2, [elotte; alatta]');   
                 catch
                     bar([elotte; alatta]');
                 end
@@ -84,10 +83,10 @@ for nume_files=2:numel(path)-1
             trash=10;
 
             %[N_peri,ind]= histc(temp_binary(temp_binary>0),1:1:max(temp_binary));
-            [N_peri,edges] = histcounts(temp_binary,0.5:1:max(temp_binary)+0.5)
+            [N_peri,edges] = histcounts(temp_binary,0.5:1:max(temp_binary)+0.5);
             edges_peri=floor(edges(2:end));
             %  [N_pre,ind]= histc(temp_binary_before(temp_binary_before>0),1:1:max(temp_binary_before));
-            [N_pre,edges] = histcounts(temp_binary_before,0.5:1:max(temp_binary)+0.5)
+            [N_pre,edges] = histcounts(temp_binary_before,0.5:1:max(temp_binary)+0.5);
             edges_pre=floor(edges(2:end));
             %         N_peri(ismember(edges_peri,edges_pre))
             %         [N_peri,edges_peri] = histcounts(temp_binary(temp_binary>0),1:1:max(temp_binary));
