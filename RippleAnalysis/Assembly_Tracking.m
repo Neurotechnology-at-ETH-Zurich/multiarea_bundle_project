@@ -1,6 +1,6 @@
 
 close all
-for structures_NUM=1:4%length(structures_unique)
+for structures_NUM=1%:length(structures_unique)
     figure(structures_NUM)
 
     %shift_subplot=[0 max((arrayfun(@(s)size(s.IL,1),Assembly_max_during_Ripple_ID))), max((arrayfun(@(s)size(s.IL,1),Assembly_max_during_Ripple_ID)))*2,max((arrayfun(@(s)size(s.IL,1),Assembly_max_during_Ripple_ID)))*3,max((arrayfun(@(s)size(s.IL,1),Assembly_max_during_Ripple_ID)))*4]
@@ -8,7 +8,19 @@ for structures_NUM=1:4%length(structures_unique)
     for nume_files=1:numel(path)-1
 
         if ~isempty(strfind(Path_temp,'rTBY'))
-            last_slesh=(strfind(Path_temp,'\'));
+           % last_slesh=(strfind(Path_temp,'\'));
+
+            if ismac
+                last_slesh=(strfind(Path_temp,'/'));
+            elseif isunix
+                last_slesh=(strfind(Path_temp,'/'));
+            elseif ispc
+                last_slesh=(strfind(Path_temp,'\'));
+            else
+                disp('Platform not supported')
+            end
+
+
             saving_filename=Path_temp((strfind(Path_temp,'rTBY')):last_slesh(end)-1);
         else
             saving_filename='unknown';
