@@ -1,0 +1,1 @@
+   lengths = sum(unique(arrayfun(@(x) size(Cells(x).individual_trials,1), 1:numel(Cells))))
