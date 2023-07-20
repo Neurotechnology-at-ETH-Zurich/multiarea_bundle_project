@@ -4,7 +4,7 @@ function car = getCAR(samplesIn, CARMode, ignoreSites)
         samplesIn(:, ignoreSites) = [];
     end
 
-    if strcmpi(CARMode, 'median')
+    if strcmpi(CARMode, 'median') || strcmpi(CARMode, 'median_ols')
         car = median(samplesIn, 2);
     else
         car = mean(samplesIn, 2);

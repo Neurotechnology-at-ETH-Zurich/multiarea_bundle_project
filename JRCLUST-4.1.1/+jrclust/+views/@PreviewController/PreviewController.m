@@ -182,7 +182,7 @@ classdef PreviewController < jrclust.interfaces.FigureController
             obj.menuCheckbox(filterMenu, obj.hCfg.filterType);
 
             refMenu = uimenu(editMenu, 'Label', 'Reference mode');
-            obj.menuOptions(refMenu, {'none', 'mean', 'median'}, @obj.setCARMode); % @TODO: local mean
+            obj.menuOptions(refMenu, {'none', 'mean', 'median','median_ols','mean_ols'}, @obj.setCARMode); % @TODO: local mean
             uimenu(editMenu, 'Label', 'Common reference threshold', 'Callback', @(hO, hE) obj.setBlankThresh());
             uimenu(editMenu, 'Label', 'FFT cleanup threshold', 'Callback', @(hO, hE) obj.setFFTThreshMAD());
 
@@ -522,8 +522,20 @@ classdef PreviewController < jrclust.interfaces.FigureController
             obj.tracesFilt = jrclust.filters.filtCAR(obj.tracesClean, [], [], 0, obj.hCfg);
             obj.tracesCAR = jrclust.utils.getCAR(obj.tracesFilt, obj.CARMode, obj.ignoreSites);
 
-            if ~strcmpi(obj.CARMode, 'none')
+            if strcmpi(obj.CARMode, 'mean') || strcmpi(obj.CARMode,'median')
                 obj.tracesFilt = bsxfun(@minus, obj.tracesFilt, cast(obj.tracesCAR, 'like', obj.tracesFilt));
+            end
+            if strcmpi(obj.CARMode, 'median_ols') || strcmpi(obj.CARMode,'mean_ols')
+                % obj.tracesCA (n_samples,1) column vector
+                % obj.tracesFilt (n_samples,n_chans) matrix
+                nSites = size(obj.tracesRaw, 2);
+                car = double(obj.tracesCAR);
+                for c = 1:nSites
+                    target_channel = double(obj.tracesFilt(:,c));
+                    [b, dev, stats] = glmfit(car, target_channel,'normal');
+                    %strcat(['channel coef'  int2str(c)  ' : '  mat2str(b)])
+                    obj.tracesFilt(:,c) = int16(stats.resid);
+                end
             end
 
             obj.tracesCAR = jrclust.utils.madScore(mean(obj.tracesCAR, 2)); % Save in MAD unit

@@ -53,6 +53,16 @@ function [samplesIn, channelMeans] = applyCAR(samplesIn, hCfg)
     elseif strcmp(hCfg.CARMode, 'median')
         channelMeans = medianExcluding(samplesIn, hCfg.ignoreSites);
         samplesIn = bsxfun(@minus, samplesIn, channelMeans);
+    elseif strcmp(hCfg.CARMode,'median_ols')
+        channelMeans = medianExcluding(samplesIn, hCfg.ignoreSites);
+        nSites = size(samplesIn, 2);
+        car = double(channelMeans);
+        for c = 1:nSites
+            target_channel = double(samplesIn(:,c));
+            [b, dev, stats] = glmfit(car, target_channel,'normal');
+            %strcat(['channel coef'  int2str(c)  ' : '  mat2str(b)])
+            samplesIn(:,c) = int16(stats.resid);
+        end
     end
 
     samplesIn(:, hCfg.ignoreSites) = 0; % TW do not repair with fMeanSite_drift
