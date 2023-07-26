@@ -14,7 +14,7 @@ predictorNames ={'duration', 'amplitude', 'lowpass min', 'lowpass mean Channel s
 
 %% This part is risponsible for searching significant "spike" of assembly strength session/structures/assemblies
 
-for nume_files=2:numel(path)-1
+for nume_files=1:numel(path)
     Path_temp=char(path(nume_files).folders);
 
     %platform check
@@ -24,7 +24,7 @@ for nume_files=2:numel(path)-1
         elseif isunix
             last_slesh=(strfind(Path_temp,'/'));
         elseif ispc
-            last_slesh=(strfind(Path_temp,'/'));
+            last_slesh=(strfind(Path_temp,'\'));
         else
             disp('Platform not supported')
         end
@@ -35,7 +35,7 @@ for nume_files=2:numel(path)-1
 
 
     for structures_NUM=1:length(structures_unique)
-            disp(['Working on Session ID: ' num2str(path(nume_files).sessionID) ' Sturcture name: ' char(structures_unique(structures_NUM))])
+        disp(['Working on Session ID: ' num2str(path(nume_files).sessionID) ' Sturcture name: ' char(structures_unique(structures_NUM))])
         P=[];
         if ~isempty(structures_unique(structures_NUM))
 
@@ -51,7 +51,7 @@ for nume_files=2:numel(path)-1
 
             end
             minDigits=size(eventSubset_temp,1);
-            
+
             %handles. ("axis" + num2str(x))
             if eval(['(size(Assembly_activity(nume_files).' char(structures_unique{structures_NUM}) ',3))'])>1
                 temp_binary=sum(repmat((pow2(size(eventSubset_temp,1)-1:-1:0))',[1,size(eventSubset_temp,2)]).*eventSubset_temp);
@@ -74,7 +74,7 @@ for nume_files=2:numel(path)-1
                 alatta= histcounts(temp_binary(temp_binary>0),0.5:1:max(temp_binary)+0.5);
                 hold on;
                 try
-                    bar(1:length([elotte; alatta])/2, [elotte; alatta]');   
+                    bar(1:length([elotte; alatta])/2, [elotte; alatta]');
                 catch
                     bar([elotte; alatta]');
                 end
@@ -309,12 +309,14 @@ for nume_files=2:numel(path)-1
                     vectorised_grouped_data=reshape(DATA_for_Violion,1,[])';
 
                     b=boxchart(groupcol_cat,vectorised_grouped_data,'GroupByColor', groupcol_cat','BoxWidth',10,'MarkerStyle','none')
-                    [p,~,stats] = anova1(vectorised_grouped_data,groupcol_cat,'off');
+                    %         [p,~,stats] = anova1(vectorised_grouped_data,groupcol_cat,'off');
+                    % [c,~,~,gnames] = multcompare(stats,"CriticalValueType","bonferroni");
+
+                    [p,table,stats] = kruskalwallis(vectorised_grouped_data,groupcol_cat,'off')
                     % [c,~,~,gnames] = multcompare(stats,"CriticalValueType","bonferroni");
                     P(i,:)=p;
                     STAT(i,:)={stats};
-
-
+                    TABLE(i,:)={table};
 
 
 
@@ -478,10 +480,12 @@ for nume_files=2:numel(path)-1
             % STAT_TOTAL(structures_NUM, nume_files)={STAT};
 
             if ~isempty(P) & ~isempty(STAT)
-                eval(['statistic.' [char(structures_unique(structures_NUM)) '_' char(saving_filename)] '.p=P;'])
+                eval(['statistic.' [char(saving_filename) '_' char(structures_unique(structures_NUM)) '_' num2str(path(nume_files).sessionID)] '.p=P;'])
 
                 % eval(['statistic.' [char(structures_unique(structures_NUM)) '_' char(saving_filename)] '.ci(num_cluster,1:2)=ci'])
-                eval(['statistic.' [char(structures_unique(structures_NUM)) '_' char(saving_filename)] '.stats={STAT};'])
+                eval(['statistic.' [char(saving_filename) '_' char(structures_unique(structures_NUM)) '_' num2str(path(nume_files).sessionID)] '.stats={STAT};'])
+                eval(['statistic.' [char(saving_filename) '_' char(structures_unique(structures_NUM)) '_' num2str(path(nume_files).sessionID)] '.table={TABLE};'])
+
             end
         end
         close all
