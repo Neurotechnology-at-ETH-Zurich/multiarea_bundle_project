@@ -1,0 +1,1 @@
+Google drive where lfp from one animal is stored. https://drive.google.com/drive/folders/1UX4xlxrpcbMDfNdmHzKYQphrKGlfE6EB?usp=sharing Must be downloaded for the network to have something to predict SPW-Rs from

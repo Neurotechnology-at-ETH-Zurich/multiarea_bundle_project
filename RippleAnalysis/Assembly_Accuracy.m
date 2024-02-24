@@ -4,7 +4,6 @@
 %% Constant:
 start_dtop_rip=[find(round(edges_CCA,2)==-0.13) find(round(edges_CCA,2)==0.13)];
 STAT={};
-
 edges_for_assembly=edges_CCA;
 flag_plot=1;
 color_lines=colormap('lines');

@@ -1,6 +1,6 @@
 function fig = LFPViewer(data,samplerate,ripple_timestamps,ripple_centers,ripple_classes,readonly)
 %LFPViewer view local field potential recordings and annotated events
-% data              (time,channels) recording data for visualization
+% data              (time,channels) recording data for visualization [lfp.raw; filtered (bandpass); hilbert of filtered (bandpass)]
 % samplerate        (1,)    samplerate in Hz
 % ripple_timestamps (:,2)   start and endpoints of ripples in seconds
 % ripple_centers    (:,1)   center timepoints of ripples in seconds
@@ -11,6 +11,7 @@ function fig = LFPViewer(data,samplerate,ripple_timestamps,ripple_centers,ripple
 %Parent container
 fig = uifigure;
 fig.Name = 'LFP Viewer';
+fig.WindowState = 'maximized';
 
 %App Data
 appdata.displayInterval = [1 samplerate]; % start by displaying the first second
@@ -65,6 +66,10 @@ fig_axesCWT_slice = uiaxes(gl);
 fig_axesCWT_slice2 = uiaxes(gl);
 fig_axesCWT_slice3 = uiaxes(gl);
 
+chan_listbox = uidropdown(gl, 'Items', {'1', '2', '3', '4', '5', '6', '7', '8'});
+chan_listbox2 = uidropdown(gl, 'Items', {'1', '2', '3', '4', '5', '6', '7', '8'});
+chan_listbox3 = uidropdown(gl, 'Items', {'1', '2', '3', '4', '5', '6', '7', '8'});
+
 %Position Components
 fig_label.Layout.Row = 1;
 fig_label.Layout.Column = [1 3];
@@ -92,20 +97,37 @@ fig_axesCWT3.Layout.Column = 2;
 fig_axesCWT_slice3.Layout.Row = 5;
 fig_axesCWT_slice3.Layout.Column = 3;
 
+% Channel ID
+% chan_label.Text = sprintf('Oriens: channel %d', appdata.channels(1));
+% chan_label2.Text = sprintf('Pyramidal: channel %d', appdata.channels(2));
+% chan_label3.Text = sprintf('Radiatum: channel %d', appdata.channels(3));
+
+chan_listbox.Layout.Row = 3;
+chan_listbox.Layout.Column = 1;
+
+chan_listbox2.Layout.Row = 4;
+chan_listbox2.Layout.Column = 1;
+
+chan_listbox3.Layout.Row = 5;
+chan_listbox3.Layout.Column = 1;
+
+channels = [1,1,1];
+
 % Initialize GUI
 fig_label.Text = appdata.helpMessage;
 updateClasses(fig,fig_listbox); % initial call of updateClasses
-drawLFP(fig,fig_axes,fig_axesCWT,fig_axesCWT2,fig_axesCWT3,fig_axesCWT_slice,fig_axesCWT_slice2,fig_axesCWT_slice3); % trigger inital plot
+drawLFP(fig,fig_axes,fig_axesCWT,fig_axesCWT2,fig_axesCWT3,fig_axesCWT_slice,fig_axesCWT_slice2,fig_axesCWT_slice3,channels); % trigger inital plot
 
-%App Behaviour
-fig.KeyPressFcn = {@processKeyPress,fig_axes,fig_axesCWT,fig_axesCWT2,fig_axesCWT3,fig_axesCWT_slice,fig_axesCWT_slice2,fig_axesCWT_slice3,fig_label, fig_listbox};
-fig.WindowButtonDownFcn = {@(src,event)uiresume(src)}; % call uiresume on click
-
-
+% App Behaviour
+fig.KeyPressFcn = {@processKeyPress,fig_axes,fig_axesCWT,fig_axesCWT2,fig_axesCWT3,fig_axesCWT_slice,fig_axesCWT_slice2,fig_axesCWT_slice3,fig_label,fig_listbox,channels};
+fig.WindowButtonDownFcn = {@(src,event) uiresume(src)}; % call uiresume on click
+chan_listbox.ValueChangedFcn = {@(src,event) updateLFP(src,event,fig_axes,fig_axesCWT,fig_axesCWT2,fig_axesCWT3,fig_axesCWT_slice,fig_axesCWT_slice2,fig_axesCWT_slice3,channels,chan_listbox,chan_listbox2,chan_listbox3)}
+chan_listbox2.ValueChangedFcn = {@(src,event) updateLFP(src,event,fig_axes,fig_axesCWT,fig_axesCWT2,fig_axesCWT3,fig_axesCWT_slice,fig_axesCWT_slice2,fig_axesCWT_slice3,channels,chan_listbox,chan_listbox2,chan_listbox3)}
+chan_listbox3.ValueChangedFcn = {@(src,event) updateLFP(src,event,fig_axes,fig_axesCWT,fig_axesCWT2,fig_axesCWT3,fig_axesCWT_slice,fig_axesCWT_slice2,fig_axesCWT_slice3,channels,chan_listbox,chan_listbox2,chan_listbox3)}
 
 end
 
-function drawLFP(src,uiaxes,uiaxes2,uiaxes3,uiaxes4,uiaxes5,uiaxes6,uiaxes7)
+function drawLFP(src,uiaxes,uiaxes2,uiaxes3,uiaxes4,uiaxes5,uiaxes6,uiaxes7,channels)
 % drawLFP trigger update of the lfp plot
 % src       the parent uifigure
 % uiaxes    the uiaxes to draw upon
@@ -131,7 +153,7 @@ xlim(uiaxes,[timestamps(1) timestamps(end)]);
 ylabel(uiaxes,'');
 
 %fig_axesCWT
-[cfs1,freq1] = cwt_mex(single(data_slice(:,5)'),'amor',2000);
+[cfs1,freq1] = cwt_mex(single(data_slice(:,channels(1))'),'amor',2000); % channels are hard coded this shouldwork based on selection
 surf(uiaxes2,timestamps,freq1,(abs(cfs1).^2)./(1./double(freq1)),'FaceColor','interp','EdgeColor','none','FaceLighting','gouraud');
 % set(uiaxes2, 'Color','k', 'XColor','k', 'YColor','k','YTick',[5 10 25 50 100 200 250],'YTickLabel',{'5','10','25','50','100','200','250'})
 xlabel(uiaxes2,'time [s]');
@@ -143,7 +165,7 @@ colormap(uiaxes2,'jet')
 
 
 %fig_axesCWT
-[cfs2,freq2] = cwt_mex(single(data_slice(:,4)'),'amor',2000);
+[cfs2,freq2] = cwt_mex(single(data_slice(:,channels(2))'),'amor',2000);
 surf(uiaxes3,timestamps,freq2,(abs(cfs2).^2)./(1./double(freq2)),'FaceColor','interp','EdgeColor','none','FaceLighting','gouraud');
 % set(uiaxes2, 'Color','k', 'XColor','k', 'YColor','k','YTick',[5 10 25 50 100 200 250],'YTickLabel',{'5','10','25','50','100','200','250'})
 xlabel(uiaxes3,'time [s]');
@@ -153,8 +175,9 @@ view(uiaxes3,0,90);
 ylabel(uiaxes3,'Frequency [Hz]');
 colormap(uiaxes3,'jet')
 
+
 %fig_axesCWT
-[cfs3,freq3] = cwt_mex(single(data_slice(:,3)'),'amor',2000);
+[cfs3,freq3] = cwt_mex(single(data_slice(:,channels(3))'),'amor',2000);
 surf(uiaxes4,timestamps,freq3,(abs(cfs3).^2)./(1./double(freq3)),'FaceColor','interp','EdgeColor','none','FaceLighting','gouraud');
 % set(uiaxes2, 'Color','k', 'XColor','k', 'YColor','k','YTick',[5 10 25 50 100 200 250],'YTickLabel',{'5','10','25','50','100','200','250'})
 xlabel(uiaxes4,'time [s]');
@@ -170,6 +193,7 @@ yc = uiaxes.YLim;
 
 % visualize ripple intervals by rectangular annotations
 for i = 1:size(ripple_timestamps,1)
+
     % get intervall and check visibility
     interval_timestamps = ripple_timestamps(i,:);
     interval_frames = interval_timestamps * appdata.samplerate;
@@ -196,7 +220,6 @@ for i = 1:size(ripple_timestamps,1)
 end
 
 
-
 % calculate ripple center frames and check visibility
 ripple_centers_frames = ripple_centers * appdata.samplerate;
 visible_centers = (data_slice_start <= ripple_centers_frames) & (ripple_centers_frames <= data_slice_stop);
@@ -207,6 +230,7 @@ xlabealling2=[];
 xlabealling3=[];
 
 for index = visible_centers_index' % iterate over entries of row vector
+
     % extract class id and map to color
     class = appdata.ripple_classes(index);
     class_index = (class == categories(appdata.ripple_classes)); % get index of ripple class
@@ -248,9 +272,8 @@ xlabel(uiaxes7,xlabealling3);
 hold(uiaxes7,'on');
 hold(uiaxes7,'on');
 
-
-
 end
+
 legend(uiaxes5,{num2str(ripple_centers(visible_centers_index'))}, 'Location','northwest')
 % legend(uiaxes6,{num2str(ripple_centers(visible_centers_index'))}, 'Location','northwest')
 % legend(uiaxes7,{num2str(ripple_centers(visible_centers_index'))}, 'Location','northwest')
@@ -261,7 +284,7 @@ hold(uiaxes7,'off')
 
 end
 
-function processKeyPress(src,event,uiaxes,uiaxes2,uiaxes3,uiaxes4,uiaxes5,uiaxes6,uiaxes7,fig_label,fig_listbox)
+function processKeyPress(src,event,uiaxes,uiaxes2,uiaxes3,uiaxes4,uiaxes5,uiaxes6,uiaxes7,fig_label,fig_listbox,channels)
 % processKeyPress this callback executes whenever a key is pressed while
 % LFPViewer is active. Here we process all user input, trigger the
 % corresponding actions and maintain the program data fields.
@@ -292,6 +315,7 @@ switch event.Key
             display_start = appdata.framecount - intervall_length;
             display_end = appdata.framecount;
         end
+
     case {'uparrow','f'} % jump to the next (active) ripple event
         % calculate current center frame and timestamp
         centerFrame = (display_start+display_end)/2;
@@ -316,6 +340,7 @@ switch event.Key
             display_start = max([round(future - intervall_length/2), 1]); % restrict intervall to beginning if necessary
             display_end = min([display_start + intervall_length, appdata.framecount]); % restrict intervall to eof if we would extend past it
         end
+
     case 'downarrow' % jump to the previous (active) ripple event
         % calculate current center frame and timestamp
         centerFrame = (display_start+display_end)/2;
@@ -402,7 +427,7 @@ switch event.Key
         appdata.ripple_classes(to_delete) = [];
         appdata.ripple_centers(to_delete) = [];
         % drop unused categories if any
-        appdata.ripple_classes = removecats(appdata.ripple_classes);
+        appdata.ripple_classes = removecats(appdata.ripple_classes);        
     case 's' % save ripples to mat file
         % check if we have write permission
         if appdata.readonly
@@ -417,6 +442,7 @@ switch event.Key
             message = {'Saving Succesfull!',strcat('Saved ripple timestamps to ',savepath,'.mat')};
             uialert(src,message,'Saving Successfull','Icon','success');
         end
+
     case 'l' % label all rippples containing target point with active class
         % check if we have write permission
         if appdata.readonly
@@ -457,6 +483,7 @@ switch event.Key
             display_start = max([round(targetFrame - intervall_length/2), 1]); % restrict intervall to beginning if necessary
             display_end = min([display_start + intervall_length, appdata.framecount]); % restrict intervall to eof if we would extend past it
         end
+
     case 'r' % rename active class
         % get active class
         active_class = fig_listbox.Value;
@@ -486,7 +513,7 @@ guidata(src,appdata);
 updateClasses(src,fig_listbox); % since this has side effects in appdata make sure that we write back modifications from above before invoking it
 
 % update the plot
-drawLFP(src,uiaxes,uiaxes2,uiaxes3,uiaxes4,uiaxes5,uiaxes6,uiaxes7);
+drawLFP(src,uiaxes,uiaxes2,uiaxes3,uiaxes4,uiaxes5,uiaxes6,uiaxes7,channels);
 end
 
 function updateClasses(fig,fig_listbox)
@@ -502,3 +529,15 @@ appdata.colormap = hsv(appdata.classes_n); % (num_classes,3) list of rgb tripple
 fig_listbox.Items = categories(appdata.ripple_classes);
 guidata(fig,appdata);
 end
+
+function updateLFP(src,event,uiaxes,uiaxes2,uiaxes3,uiaxes4,uiaxes5,uiaxes6,uiaxes7,channels,chan_listbox,chan_listbox2,chan_listbox3)
+
+channels(1) = str2double(chan_listbox.Value);
+channels(2) = str2double(chan_listbox2.Value);
+channels(3) = str2double(chan_listbox3.Value);
+
+drawLFP(src,uiaxes,uiaxes2,uiaxes3,uiaxes4,uiaxes5,uiaxes6,uiaxes7,channels)
+
+end
+
+

@@ -9,7 +9,8 @@ opts.DataLines = [4, Inf];
 opts.Delimiter = ",";
 
 % Specify column names and types
-opts.VariableNames = ["frame", "RostralX", "RostralY", "Rostral_likelihood", "CaudalX", "CaudalY", "Caudal_likelihood"];
+opts.VariableNames = ["frame", "RostralX", "RostralY","Rostral_likelihood", "CaudalX", "CaudalY", "Caudal_likelihood"]; %Baran'rat
+%opts.VariableNames = ["frame", "left_X", "left_Y", "left_likelihood", "right_X", "right_Y", "Caudal_likelihood"]; %for Eminhan's rats
 opts.VariableTypes = ["double", "double", "double", "double", "double", "double", "double"];
 
 % Specify file level properties
@@ -50,7 +51,7 @@ TTL_frame_video = (v-32768) * 0.0003125; % convert to volts
 
 %% sample-frame = alignment
 % onset and offset of the TTL
-sdnum=0;
+sdnum=2;
 meanchannel=mean(TTL_frame_video); 
 sdchannel=std(double(TTL_frame_video ));
 crossed=TTL_frame_video>meanchannel+(sdnum*sdchannel);

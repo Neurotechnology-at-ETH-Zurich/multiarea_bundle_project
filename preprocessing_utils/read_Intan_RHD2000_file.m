@@ -1,4 +1,4 @@
-function read_Intan_RHD2000_file
+function [frequency_parameters, board_adc_channels] = read_Intan_RHD2000_file()
 
 % read_Intan_RHD2000_file
 %

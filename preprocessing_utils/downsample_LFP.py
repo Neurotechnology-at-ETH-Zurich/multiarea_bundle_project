@@ -14,15 +14,15 @@ from additional_utils import read_time_dat_file
 sample_rate = 20000
 ds_sample_rate = 2000
 ds_factor = int(sample_rate / ds_sample_rate)
-num_channels = 256
+num_channels = 128
 chunk_size = 60
 raw_data_dir = input('Enter the directory of the folder containing the "amplifier.dat" file')
 bit_to_uV = 0.195
 ##############################################33
 
-raw_data_file = raw_data_dir + '/amplifier.dat'
-ds_data_file = raw_data_dir + '/amplifier_ds.dat'
-time_file = raw_data_dir + '/time.dat'
+raw_data_file = raw_data_dir + '128ch_concat_data.dat'
+ds_data_file = raw_data_dir + 'amplifier_ds.dat'
+time_file = raw_data_dir + 'time.dat'
 
 #Calculating the number of dat chunks
 time = read_time_dat_file(time_file,sample_rate)
