@@ -69,7 +69,8 @@
                 "values": [
                     "mean",
                     "median",
-                    "none"
+                    "none",
+                    "correlated_mean"
                 ]
             },
             "section": ["spike detection"]

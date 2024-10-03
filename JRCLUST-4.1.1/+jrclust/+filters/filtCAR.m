@@ -48,9 +48,11 @@ function [samplesIn, channelMeans] = applyCAR(samplesIn, hCfg)
     channelMeans = [];
 
     if strcmp(hCfg.CARMode, 'mean')
+        hCfg.updateLog('CARremoval', 'Applying mean subtraction', 0, 0);
         channelMeans = meanExcluding(samplesIn, hCfg.ignoreSites);
         samplesIn = bsxfun(@minus, samplesIn, channelMeans);
     elseif strcmp(hCfg.CARMode, 'median')
+        hCfg.updateLog('CARremoval', 'Applying median subtraction', 0, 0);
         channelMeans = medianExcluding(samplesIn, hCfg.ignoreSites);
         samplesIn = bsxfun(@minus, samplesIn, channelMeans);
     % elseif strcmp(hCfg.CARMode,'median_ols')
@@ -65,6 +67,7 @@ function [samplesIn, channelMeans] = applyCAR(samplesIn, hCfg)
     %     end
     % end
     elseif strcmpi(hCfg.CARMode, 'correlated_mean')
+        hCfg.updateLog('CARremoval', 'Applying correlated mean subtraction', 0, 0);
         nSites = size(samplesIn, 2);
         
         % calculate signal correlation
