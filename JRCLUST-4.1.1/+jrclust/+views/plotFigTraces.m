@@ -18,8 +18,8 @@ function tracesFilt = plotFigTraces(hFigTraces, hCfg, tracesRaw, resetAxis, hClu
         hCfg.useGPU = 0;
         hCfg.filterType = hCfg.dispFilter;
 
-        if hCfg.fftThresh > 0
-            tracesRaw = jrclust.filters.fftClean(tracesRaw, hCft.fftThresh, hCfg);
+        if false % hCfg.fftThresh > 0
+            tracesRaw = jrclust.filters.fftClean(tracesRaw, hCfg.fftThresh, hCfg);
         end
 
         tracesFilt = jrclust.filters.filtCAR(tracesRaw(:, viSamples1)', [], [], 0, hCfg); %Added transpose on TracesRaw TBY 24/5/21
