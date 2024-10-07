@@ -182,7 +182,7 @@ classdef PreviewController < jrclust.interfaces.FigureController
             obj.menuCheckbox(filterMenu, obj.hCfg.filterType);
 
             refMenu = uimenu(editMenu, 'Label', 'Reference mode');
-            obj.menuOptions(refMenu, {'none', 'mean', 'median','median_ols','mean_ols','correlated_mean'}, @obj.setCARMode); % @TODO: local mean
+            obj.menuOptions(refMenu, {'none', 'mean', 'median','scaled_mean','correlated_mean'}, @obj.setCARMode); % @TODO: local mean
             uimenu(editMenu, 'Label', 'Common reference threshold', 'Callback', @(hO, hE) obj.setBlankThresh());
             uimenu(editMenu, 'Label', 'FFT cleanup threshold', 'Callback', @(hO, hE) obj.setFFTThreshMAD());
 
@@ -521,6 +521,44 @@ classdef PreviewController < jrclust.interfaces.FigureController
                 'blankPeriod', obj.blankPeriod, 'blankThresh', obj.blankThresh, 'useParfor', 0);
             obj.tracesFilt = jrclust.filters.filtCAR(obj.tracesClean, [], [], 0, obj.hCfg);
             obj.tracesCAR = jrclust.utils.getCAR(obj.tracesFilt, obj.CARMode, obj.ignoreSites);
+            
+            % % visualize the mean filtered signal for the two channel groups
+            % f = figure();
+            % % select a temporal ROI
+            % ti = round(7*30000)+1;
+            % tf = round(7.6*30000);
+            % % calculate average filtered channel signal
+            % avg1 = mean(obj.tracesFilt(ti:tf,[1:22 31 32 40]),2);
+            % avg2 = mean(obj.tracesFilt(ti:tf,[25:30 33:38]),2);
+            % 
+            % % calculate residual after subtraction of scaled majority
+            % % artifact
+            % [b, dev, stats] = glmfit(avg1, avg2,'normal');
+
+            % ax1 = subplot(3,1,1);
+            % hold on;
+            % plot(avg1);
+            % plot(avg2);
+            % title('filtered artifact');
+            % legend('majority','minority');
+            % hold off;
+            % 
+            % ax2 = subplot(3,1,2);
+            % hold on;
+            % plot(avg1*b(2)+b(1));
+            % plot(avg2);
+            % title('filtered artifact');
+            % legend('scaled majority','minority');
+            % hold off;
+            % 
+            % ax3 = subplot(3,1,3);
+            % plot(stats.resid);
+            % ylim([-250,250])
+            % title('minority - scaled majority residual')
+            % %hold off;
+            % 
+            % linkaxes([ax1,ax2,ax3],'x'); % link x axes of plots
+            % ax1.Interactions = zoomInteraction('Dimensions','x'); % restrict to zoom in x
 
             if strcmpi(obj.CARMode, 'mean') || strcmpi(obj.CARMode,'median')
                 obj.tracesFilt = bsxfun(@minus, obj.tracesFilt, cast(obj.tracesCAR, 'like', obj.tracesFilt));
@@ -550,18 +588,34 @@ classdef PreviewController < jrclust.interfaces.FigureController
 
                 obj.tracesFilt = int16(double(obj.tracesFilt) * weights);
             end
-            if strcmpi(obj.CARMode, 'median_ols') || strcmpi(obj.CARMode,'mean_ols')
-                % obj.tracesCA (n_samples,1) column vector
+            if strcmpi(obj.CARMode,'scaled_mean')
+                % subtract a scaled version of the median or mean CAR from
+                % each channel. Use linear regression to find the
+                % appropriate multiplier
+
+                % obj.tracesCAR (n_samples,1) column vector
                 % obj.tracesFilt (n_samples,n_chans) matrix
                 nSites = size(obj.tracesRaw, 2);
                 car = double(obj.tracesCAR);
+                
+                scaling = zeros(nSites,1);
+
                 for c = 1:nSites
                     target_channel = double(obj.tracesFilt(:,c));
-                    predictor_channels = double(obj.tracesFilt(:,[1:c-1 c+1:nSites]));
-                    [b, dev, stats] = glmfit(predictor_channels, target_channel,'normal');
-                    strcat(['channel coef '  int2str(c)  ' : '  mat2str(b)])
+                    % fit a linear regression with L2 loss (and a constant
+                    % term)
+                    [b, dev, stats] = glmfit(car, target_channel,'normal');
+                    %strcat(['channel (intercept, scale) '  int2str(c)  ' : '  mat2str(b)])
+                    scaling(c) = b(2); % extract channel scale
                     obj.tracesFilt(:,c) = int16(stats.resid);
                 end
+
+                % f = figure();
+                % bar(scaling);
+                % ylabel('Scaling of channel mean');
+                % xlabel('Site #');
+                % title('Scaled mean subtraction');
+                %close(f);
             end
 
             obj.tracesCAR = jrclust.utils.madScore(mean(obj.tracesCAR, 2)); % Save in MAD unit
